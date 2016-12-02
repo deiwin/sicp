@@ -2,6 +2,7 @@
   (cond ((= amount 0) 1)
         ((< amount 0) 0)
         ((= (length denominations) 0) 0)
+        ((and (= (length denominations) 1) (= (modulo amount (car denominations)) 0)) 1)
         (else
           (+
             (change amount (cdr denominations))
