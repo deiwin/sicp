@@ -5,3 +5,17 @@
                 (pascal-number (- x 1) (- y 1))
                 (pascal-number (- x 1)  y)
                 ))))
+
+(define (pascal-row n)
+  (define (pascal-row-iter numbers y)
+    (cond ((> y n) numbers)
+          (else (pascal-row-iter (cons (pascal-number n y) numbers) (+ y 1)))))
+  (pascal-row-iter '() 0)
+  )
+
+(define (pascal-triangle height)
+  (define (pascal-triangle-iter rows y)
+    (cond ((>= y height) rows)
+          (else (pascal-triangle-iter (cons (pascal-row (- (- height 1) y)) rows) (+ y 1)))))
+  (pascal-triangle-iter '() 0)
+  )
