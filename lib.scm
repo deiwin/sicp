@@ -8,3 +8,6 @@
 (define (even? n)
   (= (remainder n 2) 0))
 
+(define (inc x) (+ 1 x))
+(define (id x) x)
+
