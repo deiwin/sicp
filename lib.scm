@@ -10,6 +10,7 @@
 
 (define (inc x) (+ 1 x))
 (define (id x) x)
+(define (always n) (lambda (i) n))
 
 (define (gcd a b)
   (if (= b 0)

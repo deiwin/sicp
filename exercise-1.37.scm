@@ -1,11 +1,10 @@
 (define (rec-cont-frac n d k)
   (define (iter i)
-    (if (> i k)
+    (if (>= i k)
       (/ (n i) (d i))
       (/ (n i) (+ (d i) (iter (inc i))))))
   (iter 1))
 
-(define (always n) (lambda (i) n))
 (define (golden-ratio-approx k)
   (/ 1 (rec-cont-frac (always 1.0) (always 1.0) k)))
 
@@ -17,3 +16,12 @@
         (list step current-value)
         (try current-value (inc step)))))
   (try (f 1) 2))
+
+(define (iter-cont-frac n d k)
+  (define (iter i acc)
+    (if (<= i 0)
+      acc
+      (iter (- i 1) (/ (n i) (+ (d i) acc)))))
+  (iter k 0))
+(define (iter-golden-ratio-approx k)
+  (/ 1 (iter-cont-frac (always 1.0) (always 1.0) k)))
