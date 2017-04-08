@@ -4,6 +4,8 @@
 
 (define (average x y)
   (/ (+ x y) 2))
+(define (average3 x y z)
+  (/ (+ x y z) 3))
 
 (define (even? n)
   (= (remainder n 2) 0))
@@ -27,3 +29,5 @@
         next
         (try next (+ n 1)))))
   (try first-guess 1))
+
+(define dx 0.00001)
