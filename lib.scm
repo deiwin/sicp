@@ -2,6 +2,9 @@
 
 (define (cube x) (* x x x))
 
+(define (log-with-base a x)
+  (/ (log x) (log a)))
+
 (define (average x y)
   (/ (+ x y) 2))
 (define (average3 x y z)
@@ -25,9 +28,16 @@
   (define (try guess n)
     (printf "guess ~a: ~a\n" n guess)
     (let (( next (f guess)))
-      (if (close-enough? guess next)
-        next
-        (try next (+ n 1)))))
+      (cond ((close-enough? guess next) next)
+            ((>= n 1000)
+             (printf "likely does not converge")
+             next)
+            (else (try next (+ n 1)))
+        )))
   (try first-guess 1))
 
 (define dx 0.00001)
+
+(define (damp f)
+  (lambda (x)
+    (/ (+ x (f x)) 2)))

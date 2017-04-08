@@ -1,6 +1,3 @@
 (define (golden-ratio-f x) (+ 1 (/ 1 x)))
 (define (xx-f x) (/ (log 1000) (log x)))
-(define (damp f)
-  (lambda (x)
-    (/ (+ x (f x)) 2)))
 (define damped-xx-f (damp xx-f))
