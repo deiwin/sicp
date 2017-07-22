@@ -23,9 +23,14 @@
                    (max p1 p2 p3 p4))))
 
 (define (div-interval x y)
-  (mul-interval x
-                (make-interval (/ 1.0 (upper-bound y))
-                               (/ 1.0 (lower-bound y)))))
+  (if (or (and (> (lower-bound y) 0)
+               (> (upper-bound y) 0))
+          (and (< (lower-bound y) 0)
+               (< (upper-bound y) 0)))
+    (mul-interval x
+                  (make-interval (/ 1.0 (upper-bound y))
+                                 (/ 1.0 (lower-bound y))))
+    (error "Result of dividing with interval spanning 0 is undefined" y)))
 
 (define (midpoint-interval i)
   (average (lower-bound i) (upper-bound i)))
