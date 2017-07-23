@@ -60,9 +60,7 @@
 (define (midpoint-interval i)
   (average (lower-bound i) (upper-bound i)))
 (define (width-interval i)
-  (/
-    (- (upper-bound i) (lower-bound i))
-    2))
+  (average (* -1 (lower-bound i)) (upper-bound i)))
 
 (define (alt-add-interval x y)
   (let ((midpoint (+ (midpoint-interval x) (midpoint-interval y)))
@@ -88,3 +86,16 @@
 ; But that's not the case. Therefore the width of the multiplied interval
 ; cannot only depend on the widths of the multiplied intervals. Same can be
 ; shown for division in the same manner.
+
+(define (make-center-percent c p)
+  (if (< p 0)
+    (error "A uncertainty percentage of less than 0 does not make sense")
+    (make-interval (* c (- 1 p))
+                   (* c (+ 1 p)))))
+
+(define (percent-interval i)
+  (let ((c (midpoint-interval i)))
+    (if (= c 0)
+      (error "Percentage of an interval with a center at 0 is undefined")
+      (/ (width-interval i) (abs (midpoint-interval i))))
+    ))
