@@ -17,3 +17,16 @@
 
 (define (same-parity x . rest)
   (cons x (filter (lambda (y) (= (remainder x 2) (remainder y 2))) rest)))
+
+(define (square-list items)
+  (if (null? items)
+    '()
+    (cons (square (car items)) (square-list (cdr items)))))
+
+(define (square-list items) (map square items))
+
+(define (for-each f l)
+  (if (null? l)
+    #t
+    ((f (car l))
+     (for-each (cdr l)))
