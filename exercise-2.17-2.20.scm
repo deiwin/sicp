@@ -9,3 +9,11 @@
       result
       (reverse-iter (cons (car remaining) result) (cdr remaining))))
   (reverse-iter '() l))
+
+(define (filter f l)
+  (cond ((null? l) l)
+        ((f (car l)) (cons (car l) (filter f (cdr l))))
+        (else (filter f (cdr l)))))
+
+(define (same-parity x . rest)
+  (cons x (filter (lambda (y) (= (remainder x 2) (remainder y 2))) rest)))
