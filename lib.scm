@@ -41,3 +41,21 @@
 (define (damp f)
   (lambda (x)
     (/ (+ x (f x)) 2)))
+
+(define (flatmap proc seq)
+  (foldr append '() (map proc seq)))
+
+(define (prime? x)
+  (define (iter n)
+    (cond ((= n 1) #t)
+          ((= (remainder x n) 0) #f)
+          (else (iter (- n 1)))))
+  (iter (integer-sqrt x)))
+
+(define (enumerate-interval low high)
+  (if (> low high)
+    '()
+    (cons low
+          (enumerate-interval
+            (+ low 1)
+            high))))
