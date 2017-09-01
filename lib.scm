@@ -59,3 +59,7 @@
           (enumerate-interval
             (+ low 1)
             high))))
+
+(define (repeat value n)
+  (map (always value)
+       (enumerate-interval 1 n)))
