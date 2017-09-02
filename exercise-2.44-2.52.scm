@@ -82,6 +82,44 @@
 (define up-split (split below beside))
 (define right-split (split beside below))
 
+(define identity id)
+(define (flip-horiz painter)
+  (cond ((atomic-painter? painter) painter)
+        ((below? painter) (below (flip-horiz (bottom-painter painter))
+                                 (flip-horiz (top-painter painter))))
+        ; Right and left are swapped for "beside" splits
+        ((beside? painter) (beside (flip-horiz (right-painter painter))
+                                   (flip-horiz (left-painter painter))))))
+(define (flip-vert painter)
+  (cond ((atomic-painter? painter) painter)
+        ; Top and bottom are swapped for "below" splits
+        ((below? painter) (below (flip-vert (top-painter painter))
+                                 (flip-vert (bottom-painter painter))))
+        ((beside? painter) (beside (flip-vert (left-painter painter))
+                                   (flip-vert (right-painter painter))))))
+
+; From the book
+(define (corner-split painter n)
+  (if (= n 0)
+    painter
+    (let ((up (up-split painter (- n 1)))
+          (right (right-split painter
+                              (- n 1))))
+      (let ((top-left (beside up up))
+            (bottom-right (below right
+                                 right))
+            (corner (corner-split painter
+                                  (- n 1))))
+        (beside (below painter top-left)
+                (below bottom-right
+                       corner))))))
+
+(define (square-limit painter n)
+  (let ((quarter (corner-split painter n)))
+    (let ((half (beside (flip-horiz quarter)
+                        quarter)))
+      (below (flip-vert half) half))))
+
 (define painter (make-painter 1))
 
-(display (serialize-painting (paint (up-split painter 3))))
+(display (serialize-painting (paint (square-limit painter 1))))
