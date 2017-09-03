@@ -268,11 +268,75 @@
                                         (map (lambda (i) (/ i n-segments))
                                              (enumerate-interval 0 n-segments)))))))))))
 
+; Returns a parabolic function that is 0 for x values of 0 and 1.
+(define (parabola depth)
+  (lambda (x) (+ (* -1 depth (square (- x 0.5))) (* depth 0.25))))
+
+; Returns a sinusoidal function that is 0 for x values of 0 and 1.
+(define (sinusoid depth length-in-pi)
+  (lambda (x) (* depth
+                 (- (sin (* pi length-in-pi x))
+                    (* x (sin (* pi length-in-pi)))))))
+
+; Draw helps combining different curves by connecting them together, one after
+; the other.
+(define (draw smoothness starting-point . next-points-and-curves)
+  (if (null? next-points-and-curves)
+    '()
+    (append (approximate-curve starting-point
+                               (cadr next-points-and-curves)
+                               (car next-points-and-curves)
+                               smoothness)
+            (apply draw smoothness (cadr next-points-and-curves) (cddr next-points-and-curves)))))
+
 (define wave-painter
-  (segments->painter (approximate-curve (make-vect 0 0.5)
-                                        (make-vect 1 0.2)
-                                        (lambda (x) (/ (sin (* 2 x pi)) 15))
-                                        10)))
+  (let ((hand-top-touch-height 0.26)
+        (hand-bot-touch-height 0.36))
+    (segments->painter (append
+                         ; Left side above shoulders, starting from the hand
+                         (draw 10
+                               (make-vect 0.0 hand-top-touch-height)
+                               (sinusoid 0.13 1.65)
+                               (make-vect 0.4 0.35)
+                               (parabola 0.2)
+                               (make-vect 0.45 0.32)
+                               (parabola -0.2)
+                               (make-vect 0.45 0))
+                         ; Left side below shoulders, starting from the hand
+                         (draw 10
+                               (make-vect 0.0 hand-bot-touch-height)
+                               (sinusoid 0.1 1.7)
+                               (make-vect 0.4 0.5)
+                               (parabola -0.1)
+                               (make-vect 0.3 1))
+                         ; Between the legs
+                         (approximate-curve (make-vect 0.4 1)
+                                            (make-vect 0.6 1)
+                                            (parabola -1.25)
+                                            10)
+                         ; Right side below shoulders, starting from the hand
+                         (draw 10
+                               ; This calculation ensures that if the wave is
+                               ; connected to another flipped wave, then their
+                               ; hands will touch
+                               (make-vect 1 (- 1 hand-top-touch-height))
+                               (sinusoid 0.05 0.8)
+                               (make-vect 0.63 0.47)
+                               (parabola 0.1)
+                               (make-vect 0.57 0.53)
+                               (parabola 0.1)
+                               (make-vect 0.7 1))
+                         ; Right side above shoulders, starting from the hand
+                         (draw 10
+                               (make-vect 1 (- 1 hand-bot-touch-height))
+                               (sinusoid 0.08 0.7)
+                               (make-vect 0.63 0.35)
+                               (parabola 0.01)
+                               (make-vect 0.6 0.35)
+                               (parabola -0.2)
+                               (make-vect 0.55 0.32)
+                               (parabola 0.2)
+                               (make-vect 0.55 0))))))
 
 (define a-frame (make-frame (make-vect 10 10)
                             (make-vect 260 0)
