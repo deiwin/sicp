@@ -28,5 +28,6 @@
 (define (for-each f l)
   (if (null? l)
     #t
-    ((f (car l))
-     (for-each (cdr l)))
+    ((lambda ()
+      (f (car l))
+      (foreach f (cdr l))))))
