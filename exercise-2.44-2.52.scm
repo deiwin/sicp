@@ -433,4 +433,38 @@
                             (make-vect 260 0)
                             (make-vect 0 260)))
 
-(on-screen ((below diamond-painter wave-painter) a-frame))
+; Redefine these operations with the new beside and below that work with the
+; graphical painters, to make square-limit also work with graphical painters.
+(define (split first-split second-split)
+  (define (iter painter n)
+    (if (= n 0)
+      painter
+      (let ((next (iter painter (- n 1))))
+        (first-split painter (second-split next next)))))
+  iter)
+
+(define up-split (split below beside))
+(define right-split (split beside below))
+
+(define (corner-split painter n)
+  (if (= n 0)
+    painter
+    (let ((up (up-split painter (- n 1)))
+          (right (right-split painter
+                              (- n 1))))
+      (let ((top-left (beside up up))
+            (bottom-right (below right
+                                 right))
+            (corner (corner-split painter
+                                  (- n 1))))
+        (beside (below painter top-left)
+                (below bottom-right
+                       corner))))))
+
+(define (square-limit painter n)
+  (let ((quarter (corner-split painter n)))
+    (let ((half (beside (flip-horiz quarter)
+                        quarter)))
+      (below (flip-vert half) half))))
+
+(on-screen ((square-limit wave-painter 3) a-frame))

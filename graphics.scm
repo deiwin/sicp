@@ -2,7 +2,7 @@
 
 (define (on-screen f)
   (define frame (new frame%
-                     [label "Example"]
+                     [label "Do the wave!"]
                      [width 300]
                      [height 300]))
   (new canvas% [parent frame]
