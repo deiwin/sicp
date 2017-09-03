@@ -1,3 +1,5 @@
+(load "lib.scm")
+
 ; for testing
 (define (make-painter value) value)
 (define (value painter) painter)

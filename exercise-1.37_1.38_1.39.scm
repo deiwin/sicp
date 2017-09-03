@@ -1,3 +1,5 @@
+(load "lib.scm")
+
 ; 1.37a
 (define (rec-cont-frac n d k)
   (define (iter i)

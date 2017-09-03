@@ -1,3 +1,5 @@
+(load "lib.scm")
+
 ; 1.32a
 (define (rec-accumulate combiner null-value term a next b)
   (if (> a b)

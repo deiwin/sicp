@@ -1,3 +1,5 @@
+(load "lib.scm")
+
 ; 2.30
 (define (square-tree tree)
   (cond ((null? tree) tree)

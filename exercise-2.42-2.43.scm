@@ -1,3 +1,5 @@
+(load "lib.scm")
+
 (define (make-column column-number queen-position)
   (cons column-number queen-position))
 (define (column-number c) (car c))

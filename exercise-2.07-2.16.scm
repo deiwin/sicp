@@ -1,3 +1,5 @@
+(load "lib.scm")
+
 (define (make-interval a b)
   (if (< b a)
     (cons b a)

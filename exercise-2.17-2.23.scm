@@ -1,3 +1,5 @@
+(load "lib.scm")
+
 (define (last-pair l)
   (if (null? (cdr l))
     l

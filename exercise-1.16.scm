@@ -1,3 +1,5 @@
+(load "lib.scm")
+
 (define (iter-fast-expt b n)
   (define (iter-fast-expt-iter a b n)
     (cond ((= n 0) a)

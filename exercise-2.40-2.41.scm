@@ -1,3 +1,5 @@
+(load "lib.scm")
+
 (define (make-pair-sum pair)
   (list (car pair)
         (cadr pair)

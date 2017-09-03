@@ -1,3 +1,5 @@
+(load "lib.scm")
+
 ; given
 (define (deriv g)
   (lambda (x)

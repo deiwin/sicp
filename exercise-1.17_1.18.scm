@@ -1,3 +1,5 @@
+(load "lib.scm")
+
 (define (halve n) (/ n 2))
 (define (dbl n) (+ n n)) ; "double" seems to be reserved
 

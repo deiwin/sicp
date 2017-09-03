@@ -1,3 +1,5 @@
+(load "lib.scm")
+
 ; 1.41
 (define (double f)
   (lambda (x)

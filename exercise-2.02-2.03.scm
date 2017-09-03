@@ -1,3 +1,5 @@
+(load "lib.scm")
+
 ; 2.2
 (define (make-point x y) (cons x y))
 (define (x-point p) (car p))
