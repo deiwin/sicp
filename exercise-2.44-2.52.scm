@@ -1,4 +1,5 @@
 (load "lib.scm")
+(load "graphics.scm")
 
 ; for testing
 (define (make-painter value) value)
@@ -169,7 +170,13 @@
                     (edge2-frame frame))))))
 
 (define (segments->painter segment-list)
-  (lambda (frame)
+  (lambda (draw-line-canvas frame)
+    (define (draw-line start-vect end-vect)
+      (draw-line-canvas
+        (xcor-vect start-vect)
+        (ycor-vect start-vect)
+        (xcor-vect end-vect)
+        (ycor-vect end-vect)))
     (for-each
       (lambda (segment)
         (draw-line
@@ -205,3 +212,11 @@
                                          (make-vect 0.5 0))
                            (make-segment (make-vect 0.5 0)
                                          (make-vect 0 0.5)))))
+
+(define a-frame (make-frame (make-vect 10 10)
+                            (make-vect 260 0)
+                            (make-vect 0 260)))
+
+(on-screen
+  (lambda (draw-line-canvas)
+    (diamond-painter draw-line-canvas a-frame)))
