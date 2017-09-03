@@ -310,6 +310,11 @@
                                (make-vect 0.4 0.5)
                                (parabola -0.1)
                                (make-vect 0.3 1))
+                         ; A smile :)
+                         (approximate-curve (make-vect 0.47 0.2)
+                                            (make-vect 0.53 0.2)
+                                            (parabola 0.1)
+                                            10)
                          ; Between the legs
                          (approximate-curve (make-vect 0.4 1)
                                             (make-vect 0.6 1)
