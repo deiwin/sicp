@@ -1,5 +1,6 @@
 (load "lib.scm")
 (load "graphics.scm")
+(require math/matrix)
 
 ; for testing
 (define (make-painter value) value)
@@ -212,6 +213,66 @@
                                          (make-vect 0.5 0))
                            (make-segment (make-vect 0.5 0)
                                          (make-vect 0 0.5)))))
+(define (rotation-matrix theta)
+  (matrix [[(cos theta) (* -1 (sin theta))]
+           [(sin theta) (cos theta)]]))
+
+(define (rotate-by theta vect)
+  (let ((rotated-matrix-values
+          (matrix->list (matrix* (rotation-matrix theta)
+                                 (col-matrix [(xcor-vect vect)
+                                              (ycor-vect vect)])))))
+    (make-vect (car rotated-matrix-values)
+               (cadr rotated-matrix-values))))
+
+(define make-curve-approx-acc cons)
+(define segments car)
+(define unpaired-vectors cdr)
+
+; Creates a list of segments based on the function curve-f. Curve f will be
+; called with values between 0 and 1. To get a straight line, curve-f should
+; always return 0.
+;
+; For best results, curve-f should return 0 for both inputs 0 and 1. Following
+; this guideline means that the resulting list of segments starts and ends at
+; the same points as those provided as inputs to this function.
+(define (approximate-curve start end curve-f n-segments)
+  (let ((line (sub-vect end start)))
+    (let ((line-angle (atan (ycor-vect line) (xcor-vect line))))
+      (let ((flat-line (rotate-by (* -1 line-angle) line)))
+        ; create segments out of the absolute vectors
+        (segments (foldr (lambda (v acc)
+                           (cond ((and (null? (segments acc))
+                                       (null? (unpaired-vectors acc)))
+                                  (make-curve-approx-acc '() (list v)))
+                                 ((null? (segments acc))
+                                  (make-curve-approx-acc (list (make-segment (car (unpaired-vectors acc))
+                                                                             v))
+                                                         '()))
+                                 (else (make-curve-approx-acc (cons (make-segment (end-segment (car (segments acc)))
+                                                                                  v)
+                                                                    (segments acc))
+                                                              '()))))
+                         (make-curve-approx-acc '() '())
+                         ; add the vectors back to the `start` vector to get absolute
+                         ; vectors
+                         (map (lambda (v) (add-vect start v))
+                              ; rotate the vectors back
+                              (map (lambda (v) (rotate-by line-angle v))
+                                   ; create vectors to the splits in the line, running
+                                   ; the y value through the provided function
+                                   (map (lambda (x) (make-vect (* x (xcor-vect flat-line))
+                                                               (curve-f x)))
+                                        ; split the line in to parts based on the number
+                                        ; of expected segments
+                                        (map (lambda (i) (/ i n-segments))
+                                             (enumerate-interval 0 n-segments)))))))))))
+
+(define wave-painter
+  (segments->painter (approximate-curve (make-vect 0 0.5)
+                                        (make-vect 1 0.2)
+                                        (lambda (x) (/ (sin (* 2 x pi)) 15))
+                                        10)))
 
 (define a-frame (make-frame (make-vect 10 10)
                             (make-vect 260 0)
@@ -219,4 +280,4 @@
 
 (on-screen
   (lambda (draw-line-canvas)
-    (diamond-painter draw-line-canvas a-frame)))
+    (wave-painter draw-line-canvas a-frame)))
