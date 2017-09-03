@@ -171,21 +171,22 @@
                     (edge2-frame frame))))))
 
 (define (segments->painter segment-list)
-  (lambda (draw-line-canvas frame)
-    (define (draw-line start-vect end-vect)
-      (draw-line-canvas
-        (xcor-vect start-vect)
-        (ycor-vect start-vect)
-        (xcor-vect end-vect)
-        (ycor-vect end-vect)))
-    (for-each
-      (lambda (segment)
-        (draw-line
-          ((frame-coord-map frame)
-           (start-segment segment))
-          ((frame-coord-map frame)
-           (end-segment segment))))
-      segment-list)))
+  (lambda (frame)
+    (lambda (draw-line-canvas)
+      (define (draw-line start-vect end-vect)
+        (draw-line-canvas
+          (xcor-vect start-vect)
+          (ycor-vect start-vect)
+          (xcor-vect end-vect)
+          (ycor-vect end-vect)))
+      (for-each
+        (lambda (segment)
+          (draw-line
+            ((frame-coord-map frame)
+             (start-segment segment))
+            ((frame-coord-map frame)
+             (end-segment segment))))
+        segment-list))))
 
 ; 2.49
 (define frame-outline-painter
@@ -342,6 +343,4 @@
                             (make-vect 260 0)
                             (make-vect 0 260)))
 
-(on-screen
-  (lambda (draw-line-canvas)
-    (wave-painter draw-line-canvas a-frame)))
+(on-screen (wave-painter a-frame))
