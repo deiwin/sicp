@@ -339,8 +339,98 @@
                                (parabola 0.2)
                                (make-vect 0.55 0))))))
 
+; From the book
+(define (transform-painter
+          painter origin corner1 corner2)
+  (lambda (frame)
+    (let ((m (frame-coord-map frame)))
+      (let ((new-origin (m origin)))
+        (painter (make-frame new-origin
+                             (sub-vect (m corner1)
+                                       new-origin)
+                             (sub-vect (m corner2)
+                                       new-origin)))))))
+
+(define (flip-vert painter)
+  (transform-painter
+    painter
+    (make-vect 0.0 1.0)   ; new origin
+    (make-vect 1.0 1.0)   ; new end of edge1
+    (make-vect 0.0 0.0))) ; new end of edge2
+
+; I think this is wrong in the book and does a 270 in the book instead.
+; Changing it here to what I believe to be correct.
+(define (rotate90 painter)
+  (transform-painter painter
+                     (make-vect 0 1)
+                     (make-vect 0 0)
+                     (make-vect 1 1)))
+
+(define (beside painter1 painter2)
+  (let ((split-point (make-vect 0.5 0.0)))
+    (let ((paint-left  (transform-painter
+                         painter1
+                         (make-vect 0.0 0.0)
+                         split-point
+                         (make-vect 0.0 1.0)))
+          (paint-right (transform-painter
+                         painter2
+                         split-point
+                         (make-vect 1.0 0.0)
+                         (make-vect 0.5 1.0))))
+      (lambda (frame)
+        (lambda (draw-line-canvas)
+          ((paint-left frame) draw-line-canvas)
+          ((paint-right frame) draw-line-canvas))))))
+
+; 2.50
+(define (flip-horiz painter)
+  (transform-painter
+    painter
+    (make-vect 1 0)
+    (make-vect 0 0)
+    (make-vect 1 1)))
+
+(define (rotate180 painter)
+  (transform-painter
+    painter
+    (make-vect 1 1)
+    (make-vect 0 1)
+    (make-vect 1 0)))
+(define rotate180 (compose flip-horiz flip-vert))
+
+(define (rotate270 painter)
+  (transform-painter
+    painter
+    (make-vect 1 0)
+    (make-vect 1 1)
+    (make-vect 0 0)))
+(define rotate270 (compose rotate90 rotate90 rotate90))
+
+; 2.51
+(define (below painter1 painter2)
+  (let ((split-point (make-vect 0 0.5)))
+    (let ((paint-bot (transform-painter
+                       painter1
+                       split-point
+                       (make-vect 1 0.5)
+                       (make-vect 0 1)))
+          (paint-top (transform-painter
+                       painter2
+                       (make-vect 0 0)
+                       (make-vect 1 0)
+                       split-point)))
+      (lambda (frame)
+        (lambda (draw-line-canvas)
+          ((paint-bot frame) draw-line-canvas)
+          ((paint-top frame) draw-line-canvas))))))
+
+(define (below painter1 painter2)
+  (rotate270 (beside (rotate90 painter2)
+                    (rotate90 painter1))))
+
 (define a-frame (make-frame (make-vect 10 10)
                             (make-vect 260 0)
                             (make-vect 0 260)))
 
-(on-screen (wave-painter a-frame))
+(on-screen ((below diamond-painter wave-painter) a-frame))
