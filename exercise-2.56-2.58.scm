@@ -7,15 +7,23 @@
 (define (=number? exp num)
   (and (number? exp) (= exp num)))
 
-(define (make-sum a1 a2 . rest)
-  (let ((first-pair (cond ((=number? a1 0) a2)
-                          ((=number? a2 0) a1)
-                          ((and (number? a1) (number? a2))
-                           (+ a1 a2))
-                          (else (list '+ a1 a2)))))
-    (cond ((null? rest) first-pair)
-          ((sum? first-pair) (append first-pair rest))
-          (else (apply make-sum first-pair rest)))))
+(define (make-recursively is-instance? maker)
+  (lambda (a1 a2 . rest)
+    (let ((first-pair (maker a1 a2)))
+      (cond ((null? rest) first-pair)
+            ((is-instance? first-pair) (append first-pair rest))
+            (else (apply maker first-pair rest))))))
+
+(define make-sum
+  (make-recursively
+    sum?
+    (lambda (a1 a2)
+      (cond ((=number? a1 0) a2)
+            ((=number? a2 0) a1)
+            ((and (number? a1) (number? a2))
+             (+ a1 a2))
+            (else (list '+ a1 a2))))))
+
 (define (sum? x)
   (and (pair? x) (eq? (car x) '+)))
 (define (addend s) (cadr s))
@@ -24,18 +32,18 @@
     (caddr s)
     (apply make-sum (cddr s))))
 
-(define (make-product m1 m2 . rest)
-  (let ((first-pair (cond ((or (=number? m1 0)
-                               (=number? m2 0))
-                           0)
-                          ((=number? m1 1) m2)
-                          ((=number? m2 1) m1)
-                          ((and (number? m1) (number? m2))
-                           (* m1 m2))
-                          (else (list '* m1 m2)))))
-    (cond ((null? rest) first-pair)
-          ((product? first-pair) (append first-pair rest))
-          (else (apply make-product first-pair rest)))))
+(define make-product
+  (make-recursively
+    product?
+    (lambda (m1 m2)
+      (cond ((or (=number? m1 0)
+                 (=number? m2 0))
+             0)
+            ((=number? m1 1) m2)
+            ((=number? m2 1) m1)
+            ((and (number? m1) (number? m2))
+             (* m1 m2))
+            (else (list '* m1 m2))))))
 (define (product? x)
   (and (pair? x) (eq? (car x) '*)))
 (define (multiplier p) (cadr p))
