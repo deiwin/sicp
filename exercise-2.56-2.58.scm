@@ -7,22 +7,29 @@
 (define (=number? exp num)
   (and (number? exp) (= exp num)))
 
-(define (make-recursively is-instance? maker)
-  (lambda (a1 a2 . rest)
-    (let ((first-pair (maker a1 a2)))
-      (cond ((null? rest) first-pair)
-            ((is-instance? first-pair) (append first-pair rest))
-            (else (apply maker first-pair rest))))))
+(define (flatten-terms is-instance? terms)
+  (foldr (lambda (term l)
+           (if (is-instance? term)
+             (append (flatten-terms is-instance? (cdr term))
+                     l)
+             (cons term l)))
+         '()
+         terms))
 
-(define make-sum
-  (make-recursively
-    sum?
-    (lambda (a1 a2)
-      (cond ((=number? a1 0) a2)
-            ((=number? a2 0) a1)
-            ((and (number? a1) (number? a2))
-             (+ a1 a2))
-            (else (list '+ a1 a2))))))
+; Reduces all numerical values in the provided list of terms using the provided
+; proc and initial value. Returns the list of terms with the reduced numerical
+; value being the first element in the list.
+(define (reduce-numbers proc init terms)
+  (define make-acc cons)
+  (define numerical-value car)
+  (define other-terms cdr)
+  (let ((acc (foldr (lambda (term acc)
+                      (if (number? term)
+                        (make-acc (proc (numerical-value acc) term) (other-terms acc))
+                        (make-acc (numerical-value acc) (cons term (other-terms acc)))))
+                    (make-acc init '())
+                    terms)))
+    (cons (numerical-value acc) (other-terms acc))))
 
 (define (sum? x)
   (and (pair? x) (eq? (car x) '+)))
@@ -31,19 +38,18 @@
   (if (null? (cdddr s))
     (caddr s)
     (apply make-sum (cddr s))))
+(define (make-sum a1 a2 . rest)
+  (let ((terms (reduce-numbers + 0
+                               (flatten-terms sum?
+                                              (cons a1 (cons a2 rest))))))
+    (let ((simplified-terms (if (and (= (car terms) 0)
+                                     (not (null? (cdr terms))))
+                              (cdr terms)
+                              terms)))
+      (if (null? (cdr simplified-terms))
+        (car simplified-terms)
+        (cons '+ simplified-terms)))))
 
-(define make-product
-  (make-recursively
-    product?
-    (lambda (m1 m2)
-      (cond ((or (=number? m1 0)
-                 (=number? m2 0))
-             0)
-            ((=number? m1 1) m2)
-            ((=number? m2 1) m1)
-            ((and (number? m1) (number? m2))
-             (* m1 m2))
-            (else (list '* m1 m2))))))
 (define (product? x)
   (and (pair? x) (eq? (car x) '*)))
 (define (multiplier p) (cadr p))
@@ -51,6 +57,17 @@
   (if (null? (cdddr p))
     (caddr p)
     (apply make-product (cddr p))))
+(define (make-product m1 m2 . rest)
+  (let ((terms (reduce-numbers * 1
+                               (flatten-terms product?
+                                              (cons m1 (cons m2 rest))))))
+    (let ((simplified-terms (if (and (= (car terms) 1)
+                                     (not (null? (cdr terms))))
+                              (cdr terms)
+                              terms)))
+      (cond ((=number? (car simplified-terms) 0) 0)
+            ((null? (cdr simplified-terms)) (car simplified-terms))
+            (else (cons '* simplified-terms))))))
 
 (define (make-exponentiation base exponent)
   (cond ((=number? exponent 0) 1)
