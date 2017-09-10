@@ -32,12 +32,10 @@
     (cons (numerical-value acc) (other-terms acc))))
 
 (define (sum? x)
-  (and (pair? x) (eq? (car x) '+)))
-(define (addend s) (cadr s))
-(define (augend s)
-  (if (null? (cdddr s))
-    (caddr s)
-    (apply make-sum (cddr s))))
+  (and (pair? x)
+       (eq? (cadr x) '+)))
+(define (addend s) (car s))
+(define (augend s) (caddr s))
 (define (make-sum a1 a2 . rest)
   (let ((terms (reduce-numbers + 0
                                (flatten-terms sum?
@@ -48,15 +46,13 @@
                               terms)))
       (if (null? (cdr simplified-terms))
         (car simplified-terms)
-        (cons '+ simplified-terms)))))
+        (add-between simplified-terms '+)))))
 
 (define (product? x)
-  (and (pair? x) (eq? (car x) '*)))
-(define (multiplier p) (cadr p))
-(define (multiplicand p)
-  (if (null? (cdddr p))
-    (caddr p)
-    (apply make-product (cddr p))))
+  (and (pair? x)
+       (eq? (cadr x) '*)))
+(define (multiplier p) (car p))
+(define (multiplicand p) (caddr p))
 (define (make-product m1 m2 . rest)
   (let ((terms (reduce-numbers * 1
                                (flatten-terms product?
@@ -67,17 +63,18 @@
                               terms)))
       (cond ((=number? (car simplified-terms) 0) 0)
             ((null? (cdr simplified-terms)) (car simplified-terms))
-            (else (cons '* simplified-terms))))))
+            (else (add-between simplified-terms '*))))))
 
 (define (make-exponentiation base exponent)
   (cond ((=number? exponent 0) 1)
         ((=number? exponent 1) base)
         ((and (number? base) (number? exponent))
          (expt base exponent))
-        (else (list '** base exponent))))
+        (else (list base '** exponent))))
 (define (exponentiation? exp)
-  (and (pair? exp) (eq? (car exp) '**)))
-(define base cadr)
+  (and (pair? exp)
+       (eq? (cadr exp) '**)))
+(define base car)
 (define exponent caddr)
 
 (define (deriv exp var)
@@ -106,5 +103,4 @@
         (else (error "unknown expression
                      type: DERIV" exp))))
 
-(deriv '(* x y (+ x 3)) 'x)
-;'(+ (* x y) (* y (+ x 3)))
+(deriv '(x + (3 * (x + (y + 2)))) 'x)
