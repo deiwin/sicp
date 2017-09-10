@@ -152,3 +152,18 @@
 (unless (and (equal? (union-set tree1 tree2) tree3)
              (equal? (intersection-set tree1 tree2) tree3))
   (error "union and intersection test failed"))
+
+(define key (lambda (x) x))
+(define (lookup given-key set-of-records)
+  (cond ((null? set-of-records) false)
+        ((equal? given-key
+                 (key (entry set-of-records)))
+         (entry set-of-records))
+        ((< given-key (key (entry set-of-records)))
+         (lookup given-key (left-branch set-of-records)))
+        (else
+          (lookup given-key (right-branch set-of-records)))))
+
+(unless (and (equal? (lookup 9 tree2) 9)
+             (equal? (lookup 2 tree2) #f))
+  (error "lookup test failed"))
