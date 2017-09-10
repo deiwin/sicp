@@ -55,6 +55,78 @@
                 result-list)))))
   (copy-to-list tree '()))
 
+(define (list->tree elements)
+  (car (partial-tree
+         elements (length elements))))
+
+(define (partial-tree elts n)
+  (if (= n 0)
+    (cons '() elts)
+    (let ((left-size
+            (quotient (- n 1) 2)))
+      (let ((left-result
+              (partial-tree
+                elts left-size)))
+        (let ((left-tree
+                (car left-result))
+              (non-left-elts
+                (cdr left-result))
+              (right-size
+                (- n (+ left-size 1))))
+          (let ((this-entry
+                  (car non-left-elts))
+                (right-result
+                  (partial-tree
+                    (cdr non-left-elts)
+                    right-size)))
+            (let ((right-tree
+                    (car right-result))
+                  (remaining-elts
+                    (cdr right-result)))
+              (cons (make-tree this-entry
+                               left-tree
+                               right-tree)
+                    remaining-elts))))))))
+
+(define (union-ordered-list l1 l2)
+  (cond ((null? l1) l2)
+        ((null? l2) l1)
+        (else (let ((x1 (car l1))
+                    (rest1 (cdr l1))
+                    (x2 (car l2))
+                    (rest2 (cdr l2)))
+                (cond ((= x1 x2)
+                       (cons x1 (union-ordered-list rest1 rest2)))
+                      ((< x1 x2)
+                       (cons x1 (union-ordered-list rest1 l2)))
+                      (else
+                        (cons x2 (union-ordered-list l1 rest2))))))))
+
+(define (union-set set1 set2)
+  (list->tree
+    (union-ordered-list (tree->list-2 set1)
+                        (tree->list-2 set2))))
+
+(define (intersection-ordered-list l1 l2)
+  (if (or (null? l1) (null? l2))
+    '()
+    (let ((x1 (car l1)) (x2 (car l2)))
+      (cond ((= x1 x2)
+             (cons x1 (intersection-ordered-list
+                        (cdr l1)
+                        (cdr l2))))
+            ((< x1 x2) (intersection-ordered-list
+                         (cdr l1)
+                         l2))
+            ((< x2 x1) (intersection-ordered-list
+                         l1
+                         (cdr l2)))))))
+
+(define (intersection-set set1 set2)
+  (list->tree
+    (intersection-ordered-list (tree->list-2 set1)
+                               (tree->list-2 set2))))
+
 (define tree1 (make-tree 7
                          (make-tree 3
                                     (make-leaf 1)
@@ -70,17 +142,12 @@
                                                empty-tree
                                                (make-leaf 11)))))
 (define tree3 (make-tree 5
-                         (make-tree 3
-                                    (make-leaf 1)
-                                    empty-tree)
+                         (make-tree 1
+                                    empty-tree
+                                    (make-leaf 3))
                          (make-tree 9
                                     (make-leaf 7)
                                     (make-leaf 11))))
 
-(let ((expected-result '(1 3 5 7 9 11)))
-  (and (equal? expected-result (tree->list-1 tree1))
-       (equal? expected-result (tree->list-1 tree2))
-       (equal? expected-result (tree->list-1 tree3))
-       (equal? expected-result (tree->list-2 tree1))
-       (equal? expected-result (tree->list-2 tree2))
-       (equal? expected-result (tree->list-2 tree3))))
+(and (equal? (union-set tree1 tree2) tree3)
+     (equal? (intersection-set tree1 tree2) tree3))
