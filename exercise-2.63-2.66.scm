@@ -149,5 +149,6 @@
                                     (make-leaf 7)
                                     (make-leaf 11))))
 
-(and (equal? (union-set tree1 tree2) tree3)
-     (equal? (intersection-set tree1 tree2) tree3))
+(unless (and (equal? (union-set tree1 tree2) tree3)
+             (equal? (intersection-set tree1 tree2) tree3))
+  (error "union and intersection test failed"))
