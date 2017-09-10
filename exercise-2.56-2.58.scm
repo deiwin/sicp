@@ -31,11 +31,26 @@
                     terms)))
     (cons (numerical-value acc) (other-terms acc))))
 
-(define (sum? x)
-  (and (pair? x)
-       (eq? (cadr x) '+)))
-(define (addend s) (car s))
-(define (augend s) (caddr s))
+(define (infix-operator-check operator)
+  (lambda (infix-term)
+    (and (pair? infix-term)
+         (pair? (memq operator infix-term)))))
+(define (infix-left-side operator)
+  (lambda (infix-term)
+    (let ((left-side (takef infix-term (lambda (x) (not (eq? x operator))))))
+      (if (null? (cdr left-side))
+        (car left-side)
+        left-side))))
+(define (infix-right-side operator)
+  (lambda (infix-term)
+    (let ((right-side (cdr (memq operator infix-term))))
+      (if (null? (cdr right-side))
+        (car right-side)
+        right-side))))
+
+(define sum? (infix-operator-check '+))
+(define addend (infix-left-side '+))
+(define augend (infix-right-side '+))
 (define (make-sum a1 a2 . rest)
   (let ((terms (reduce-numbers + 0
                                (flatten-terms sum?
@@ -48,11 +63,9 @@
         (car simplified-terms)
         (add-between simplified-terms '+)))))
 
-(define (product? x)
-  (and (pair? x)
-       (eq? (cadr x) '*)))
-(define (multiplier p) (car p))
-(define (multiplicand p) (caddr p))
+(define product? (infix-operator-check '*))
+(define multiplier (infix-left-side '*))
+(define multiplicand (infix-right-side '*))
 (define (make-product m1 m2 . rest)
   (let ((terms (reduce-numbers * 1
                                (flatten-terms product?
@@ -65,17 +78,15 @@
             ((null? (cdr simplified-terms)) (car simplified-terms))
             (else (add-between simplified-terms '*))))))
 
+(define exponentiation? (infix-operator-check '**))
+(define base (infix-left-side '**))
+(define exponent (infix-right-side '**))
 (define (make-exponentiation base exponent)
   (cond ((=number? exponent 0) 1)
         ((=number? exponent 1) base)
         ((and (number? base) (number? exponent))
          (expt base exponent))
         (else (list base '** exponent))))
-(define (exponentiation? exp)
-  (and (pair? exp)
-       (eq? (cadr exp) '**)))
-(define base car)
-(define exponent caddr)
 
 (define (deriv exp var)
   (cond ((number? exp) 0)
@@ -103,4 +114,4 @@
         (else (error "unknown expression
                      type: DERIV" exp))))
 
-(deriv '(x + (3 * (x + (y + 2)))) 'x)
+(deriv '(x + 3 * (x + y + 2)) 'x)
