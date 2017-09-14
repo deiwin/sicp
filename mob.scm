@@ -93,3 +93,25 @@
   (define (good-enough? guess next-guess)
     (< (abs (- (/ guess next-guess) 1)) 0.000001))
   (cbrt-iter 1.0 x 0))
+
+; Surprise Exercise: How many different ways can we make change of $1.00,
+; given half-dollars, quarters, dimes, nickels, and pennies? More
+; generally, can we write a procedure to compute the number of ways
+; to change any given amount of money?
+(define (coin-change-for amount coins)
+  (cond ((= amount 0) 1)
+    ((< amount 0) 0)
+    ((null? coins) 0)
+    (else
+     (+
+      (coin-change-for amount (cdr coins))
+      (coin-change-for (- amount (car coins)) coins)))
+    )
+  )
+
+(define eesti-coins '(1 2 5 10 20 50 100 200))
+(define us-coins '(1 5 10 25 50))
+(define bad-coinz '(5 8 14))
+(and (= (coin-change-for 0 eesti-coins) 1)
+     (= (coin-change-for 3 eesti-coins) 2)
+     (= (coin-change-for 12 bad-coinz) 0))
