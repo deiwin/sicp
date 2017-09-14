@@ -155,13 +155,15 @@
 ; Exercise 1.12 Write a procedure that computes elements of
 ; Pascal’s triangle by means of a recursive process.
 (define (pascal n)
-  (define (new-row old-row)
-    (if (not (null? (cdr old-row)))
-      (cons (+ (car old-row) (cadr old-row)) (new-row (cdr old-row)))
-      '(1)))
+  (define (new-row prev old-row)
+    (if (null? old-row)
+        '(1)
+        (cons
+          (+ prev (car old-row))
+          (new-row (car old-row) (cdr old-row)))))
   (if (= n 0)
       '(1)
-      (cons 1 (new-row (pascal (- n 1))))))
+      (new-row 0 (pascal (- n 1)))))
 
 (and (equal? (pascal 0) '(1))
      (equal? (pascal 1) '(1 1))
