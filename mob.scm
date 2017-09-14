@@ -115,3 +115,36 @@
 (and (= (coin-change-for 0 eesti-coins) 1)
      (= (coin-change-for 3 eesti-coins) 2)
      (= (coin-change-for 12 bad-coinz) 0))
+
+; Exercise 1.11: A function f is defined by the rule that f ( n ) = n if n < 3
+; and f ( n ) = f ( n − 1 ) + 2 f ( n − 2 ) + 3 f ( n − 3 ) if n ≥ 3 . Write a
+; procedure that computes f by means of a recursive process. Write a procedure
+; that computes f by means of an iterative process.
+
+(define (f-rec n)
+  (if (< n 3)
+	n
+	(+ (f-rec (- n 1))
+	   (* 2 (f-rec (- n 2)))
+	   (* 3 (f-rec (- n 3))))))
+
+(define (f-iter n)
+  (define (iter step a b c)
+	(if (= step n)
+	  a
+	  (iter (+ step 1)
+			b
+			c
+			(+ (* 3 a)
+			   (* 2 b)
+			   c))))
+  (iter 0 0 1 2))
+
+(and (= (f-rec 1) 1)
+	 (= (f-rec 2) 2)
+	 (= (f-rec 3) 4)
+	 (= (f-rec 5) 25)
+     (= (f-iter 1) 1)
+	 (= (f-iter 2) 2)
+	 (= (f-iter 3) 4)
+	 (= (f-iter 5) 25))
