@@ -126,31 +126,31 @@
 
 (define (f-rec n)
   (if (< n 3)
-	n
-	(+ (f-rec (- n 1))
-	   (* 2 (f-rec (- n 2)))
-	   (* 3 (f-rec (- n 3))))))
+    n
+    (+ (f-rec (- n 1))
+       (* 2 (f-rec (- n 2)))
+       (* 3 (f-rec (- n 3))))))
 
 (define (f-iter n)
   (define (iter step a b c)
-	(if (= step n)
-	  a
-	  (iter (+ step 1)
-			b
-			c
-			(+ (* 3 a)
-			   (* 2 b)
-			   c))))
+    (if (= step n)
+      a
+      (iter (+ step 1)
+            b
+            c
+            (+ (* 3 a)
+               (* 2 b)
+               c))))
   (iter 0 0 1 2))
 
 (and (= (f-rec 1) 1)
-	 (= (f-rec 2) 2)
-	 (= (f-rec 3) 4)
-	 (= (f-rec 5) 25)
+     (= (f-rec 2) 2)
+     (= (f-rec 3) 4)
+     (= (f-rec 5) 25)
      (= (f-iter 1) 1)
-	 (= (f-iter 2) 2)
-	 (= (f-iter 3) 4)
-	 (= (f-iter 5) 25))
+     (= (f-iter 2) 2)
+     (= (f-iter 3) 4)
+     (= (f-iter 5) 25))
 
 ; Exercise 1.12 Write a procedure that computes elements of
 ; Pascal’s triangle by means of a recursive process.
