@@ -1,6 +1,3 @@
-; (assert (and (equal? '(1) '(2))
-;              (= 1 1)))
-
 (define (combine-failure a b)
   (list 'failed (append (cadr a)
                         (cadr b))))
@@ -51,13 +48,6 @@
     (if (= a b)
       #t
       (list 'failed (list message)))))
-
-; (string-append
-;   "Assertion error! "
-;   (string-join (cadr (assert-or (assert-equal? '(1) '(2))
-;                           (assert= 1 2)))
-;                " and "))
-
 
 (define-syntax assert
   (lambda (stx)
