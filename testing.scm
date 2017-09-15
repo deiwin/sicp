@@ -75,11 +75,12 @@
                              (list 'if
                                    (list 'equal? #t 'result)
                                    #t
-                                   (list 'string-append
-                                         "Assertion error! "
-                                         (list 'string-join
-                                               (list 'cadr 'result)
-                                               " and ")))))))))
+                                   (list 'error
+                                         (list 'string-append
+                                               "Assertion error! \n* "
+                                               (list 'string-join
+                                                     (list 'cadr 'result)
+                                                     "\n* "))))))))))
 
 (assert (or (equal? '(1) '(2))
             (= 1 2)))
