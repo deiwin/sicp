@@ -77,10 +77,11 @@
                                    #t
                                    (list 'error
                                          (list 'string-append
-                                               "Assertion error! \n* "
+                                               "\033[31mAssertion error! \033[0m\n\033[31m  * "
                                                (list 'string-join
                                                      (list 'cadr 'result)
-                                                     "\n* "))))))))))
+                                                     "\033[0m\n\033[31m  * ")
+                                               "\033[0m")))))))))
 
 (assert (or (equal? '(1) '(2))
             (= 1 2)))
