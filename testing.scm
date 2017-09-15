@@ -70,14 +70,16 @@
     (datum->syntax stx
                    (let ((content (cadr (syntax->datum stx))))
                      (let ((converted-content (convert content)))
-                       (list 'if
-                             (list 'equal? #t converted-content)
-                             #t
-                             (list 'string-append
-                             "Assertion error! "
-                             (list 'string-join
-                                   (list 'cadr converted-content)
-                                   " and "))))))))
+                       (list 'let
+                             (list (list 'result converted-content))
+                             (list 'if
+                                   (list 'equal? #t 'result)
+                                   #t
+                                   (list 'string-append
+                                         "Assertion error! "
+                                         (list 'string-join
+                                               (list 'cadr 'result)
+                                               " and ")))))))))
 
 (assert (or (equal? '(1) '(2))
             (= 1 2)))
