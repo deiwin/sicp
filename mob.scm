@@ -169,3 +169,14 @@
      (equal? (pascal 1) '(1 1))
      (equal? (pascal 2) '(1 2 1))
      (equal? (pascal 3) '(1 3 3 1)))
+
+(define (assert predicate a b)
+  (unless
+    (predicate a b)
+    (error (string-append
+             "Assertion error! Expected "
+             (pretty-format a)
+             " to " (pretty-format predicate) " "
+             (pretty-format b)))))
+
+(assert = 2 2.0)
