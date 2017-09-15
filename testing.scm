@@ -39,20 +39,45 @@
     #t
     (let ((message
             (string-append
-              "Expected "
               (pretty-format a)
-              " to equal? "
+              " does not equal? "
               (pretty-format b))))
       (list 'failed (list message)))))
 (define (assert= a b)
   (let ((message (string-append
-                   "Expected "
                    (pretty-format a)
-                   " to = "
+                   " does not = "
                    (pretty-format b))))
     (if (= a b)
       #t
       (list 'failed (list message)))))
 
-(assert-or (assert-equal? '(1) '(2))
-           (assert= 1 2))
+; (string-append
+;   "Assertion error! "
+;   (string-join (cadr (assert-or (assert-equal? '(1) '(2))
+;                           (assert= 1 2)))
+;                " and "))
+
+
+(define-syntax assert
+  (lambda (stx)
+    (define (convert exprsn)
+      (cond ((not pair?) exprsn)
+            ((equal? (car exprsn) 'equal?) (cons 'assert-equal? (cdr exprsn)))
+            ((equal? (car exprsn) '=) (cons 'assert= (cdr exprsn)))
+            ((equal? (car exprsn) 'or) (cons 'assert-or (map convert (cdr exprsn))))
+            ((equal? (car exprsn) 'and) (cons 'assert-and (map convert (cdr exprsn))))))
+    (datum->syntax stx
+                   (let ((content (cadr (syntax->datum stx))))
+                     (let ((converted-content (convert content)))
+                       (list 'if
+                             (list 'equal? #t converted-content)
+                             #t
+                             (list 'string-append
+                             "Assertion error! "
+                             (list 'string-join
+                                   (list 'cadr converted-content)
+                                   " and "))))))))
+
+(assert (or (equal? '(1) '(2))
+            (= 1 2)))
