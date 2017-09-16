@@ -60,15 +60,14 @@
             (else (error "unexpected expression" exprsn))))
     (datum->syntax stx
                    (let ((content (cadr (syntax->datum stx))))
-                     (let ((converted-content (convert content)))
-                       `(let ((result ,converted-content))
-                          (if (equal? #t result)
-                            #t
-                            (error (string-append
-                                     "\033[31mAssertion error! \033[0m\n\033[31m  * "
-                                     (string-join (cadr result)
-                                                  "\033[0m\n\033[31m  * ")
-                                     "\033[0m")))))))))
+                     `(let ((result ,(convert content)))
+                        (if (equal? #t result)
+                          #t
+                          (error (string-append
+                                   "\033[31mAssertion error! \033[0m\n\033[31m  * "
+                                   (string-join (cadr result)
+                                                "\033[0m\n\033[31m  * ")
+                                   "\033[0m"))))))))
 
 (assert (or (equal? '(1) '(2))
             (= 1 2)))
