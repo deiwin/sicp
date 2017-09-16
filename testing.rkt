@@ -15,6 +15,9 @@
   (define (combine-failure f1 f2)
     (create-failure #`(append #,(assertion-contexts f1)
                               #,(assertion-contexts f2))))
+  (define (combine-success f1 f2)
+    (create-success #`(append #,(assertion-contexts f1)
+                              #,(assertion-contexts f2))))
   (define empty-failure
     (create-failure #''()))
   (define empty-success
@@ -38,24 +41,32 @@
                                       predicate
                                       #`(list #,@args)
                                       #f)))))
-  (define (combine-failure-with-assertion failure other-assertion)
-    #`(cond [#,(success? other-assertion) #,failure]
-            [#,(failure? other-assertion) #,(combine-failure failure other-assertion)]
-            [else (error "macro wrong, expecting an assertion")]))
   (define (make-and assert-stx-list)
     #`(foldl
         (lambda (assertion acc)
-          (cond [#,(success? #'assertion) acc]
-                [#,(failure? #'assertion) #,(combine-failure-with-assertion #'assertion #'acc)]
-                [else (error "macro wrong, expecting an assertion")]))
+          (cond [(and #,(success? #'assertion)
+                      #,(success? #'acc))
+                 #,(combine-success #'assertion #'acc)]
+                [(and #,(failure? #'assertion)
+                      #,(failure? #'acc))
+                 #,(combine-failure #'assertion #'acc)]
+                [#,(failure? #'assertion) assertion]
+                [#,(failure? #'acc) acc]
+                [else (error "macro wrong, expecting assertions")]))
         #,empty-success
         (list #,@assert-stx-list)))
   (define (make-or assert-stx-list)
     #`(foldl
         (lambda (assertion acc)
-          (cond [#,(success? #'assertion) assertion]
-                [#,(failure? #'assertion) #,(combine-failure-with-assertion #'assertion #'acc)]
-                [else (error "macro wrong, expecting an assertion")]))
+          (cond [(and #,(success? #'assertion)
+                      #,(success? #'acc))
+                 #,(combine-success #'assertion #'acc)]
+                [(and #,(failure? #'assertion)
+                      #,(failure? #'acc))
+                 #,(combine-failure #'assertion #'acc)]
+                [#,(success? #'assertion) assertion]
+                [#,(success? #'acc) acc]
+                [else (error "macro wrong, expecting assertions")]))
         #,empty-failure
         (list #,@assert-stx-list)))
   (define (make-not assertion)
