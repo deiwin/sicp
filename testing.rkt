@@ -1,36 +1,37 @@
 (define-syntax (assert stx)
+  (define (create-assertion-context operation args)
+    #`(cons #,operation #,args))
+  (define (context-operation context)
+    #`(car #,context))
+  (define (context-args context)
+    #`(cdr #,context))
+
+  (define (create-failure context)
+    #`(cons 'failed (list #,context)))
+  (define (combine-failure f1 f2)
+    #`(cons 'failed (append #,(assertion-contexts f1)
+                            #,(assertion-contexts f2))))
+  (define (assertion-contexts assertion)
+    #`(cdr #,assertion))
+  (define (failure? assertion)
+    #`(and (pair? #,assertion)
+           (equal? (car #,assertion) 'failed)))
+
   (define (make-equal? a b)
     #`(if (equal? #,a #,b)
         #t
-        (let ([message
-                (string-append
-                  (pretty-format #,a)
-                  " does not equal? "
-                  (pretty-format #,b))])
-          (list 'failed (list message)))))
+        #,(create-failure (create-assertion-context #'equal? #`(list #,a #,b)))))
   (define (make= number-stx-list)
     #`(if (= #,@number-stx-list)
         #t
-        (let ([message
-                (string-join (map pretty-format
-                                  (list  #,@number-stx-list))
-                             ", "
-                             #:before-last " and "
-                             #:after-last " are not =")])
-          (list 'failed (list message)))))
-  (define (combine-failure f1 f2)
-    #`(list 'failed (append (cadr #,f1)
-                            (cadr #,f2))))
-  (define (failed? assert-result-stx)
-    #`(and (pair? #,assert-result-stx)
-           (equal? (car #,assert-result-stx) 'failed)))
+        #,(create-failure (create-assertion-context #'= #`(list #,@number-stx-list)))))
   (define (make-and assert-stx-list)
     #`(foldl
-        (lambda (assert-result acc)
-          (cond (#,(failed? #'assert-result) (if #,(failed? #'acc)
-                                               #,(combine-failure #'assert-result #'acc)
-                                               assert-result))
-                (assert-result acc)
+        (lambda (assertion acc)
+          (cond (#,(failure? #'assertion) (if #,(failure? #'acc)
+                                            #,(combine-failure #'assertion #'acc)
+                                            assertion))
+                (assertion acc)
                 (else
                   (error "macro wrong, got #f instead of (list 'failed (list))"))))
         #t
@@ -38,12 +39,12 @@
   (define (make-or assert-stx-list)
     (define (or-combine head rest)
       #`(cond [(not #,rest) #,head]
-              [#,(failed? rest) #,(combine-failure head rest)]
+              [#,(failure? rest) #,(combine-failure head rest)]
               [else #t]))
     #`(foldl
-        (lambda (assert-result acc)
-          (cond (#,(failed? #'assert-result) #,(or-combine #'assert-result #'acc))
-                (assert-result #t)
+        (lambda (assertion acc)
+          (cond (#,(failure? #'assertion) #,(or-combine #'assertion #'acc))
+                (assertion #t)
                 (else
                   (error "macro wrong, got #f instead of (list 'failed (list))"))))
         #f
@@ -64,14 +65,23 @@
         (string-join (string-split #,assert-stx "\n")
                      "\033[0m\n\033[31m")
         "\033[0m"))
+  (define (format-context context)
+    #`(string-append
+        (string-join (map pretty-format
+                          #,(context-args context))
+                     ", "
+                     #:before-last " and ")
+        " are not "
+        (pretty-format #,(context-operation context))))
   (syntax-case stx ()
     [(assert bool-exp)
-     #`(let ([result #,(make-assert #'bool-exp)])
-         (if (equal? #t result)
+     #`(let ([assertion #,(make-assert #'bool-exp)])
+         (if (equal? #t assertion)
            #t
-           (error #,(color-red #'(string-append
+           (error #,(color-red #`(string-append
                                    "Assertion error!\n  * "
-                                   (string-join (cadr result)
+                                   (string-join (map (lambda (context) #,(format-context #'context))
+                                                     #,(assertion-contexts #'assertion))
                                                 "\n  * "))))))]))
 
 
