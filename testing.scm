@@ -52,11 +52,12 @@
 (define-syntax assert
   (lambda (stx)
     (define (convert exprsn)
-      (cond ((not pair?) exprsn)
+      (cond ((not (pair? exprsn)) exprsn)
             ((equal? (car exprsn) 'equal?) (cons 'assert-equal? (cdr exprsn)))
             ((equal? (car exprsn) '=) (cons 'assert= (cdr exprsn)))
             ((equal? (car exprsn) 'or) (cons 'assert-or (map convert (cdr exprsn))))
-            ((equal? (car exprsn) 'and) (cons 'assert-and (map convert (cdr exprsn))))))
+            ((equal? (car exprsn) 'and) (cons 'assert-and (map convert (cdr exprsn))))
+            (else (error "unexpected expression" exprsn))))
     (datum->syntax stx
                    (let ((content (cadr (syntax->datum stx))))
                      (let ((converted-content (convert content)))
