@@ -101,20 +101,31 @@
                      " ")
         ") is "
         (~a #,(context-result context))))
-  (define (format-failure assertion)
+  (define (format-failure message assertion)
     (color-red #`(string-append
-                   "Assertion error!\n  * "
+                   #,message
+                   "\n  * "
                    (string-join (map (lambda (context) #,(format-context #'context))
                                      #,(assertion-contexts assertion))
                                 "\n  * "))))
+  (define (error-if-failure message assertion)
+    #`(let ([assertion #,assertion])
+        (if #,(success? #'assertion)
+          #t
+          (error #,(format-failure message #'assertion)))))
   (syntax-case stx ()
     [(assert bool-exp)
-     #`(let ([assertion #,(make-assert #'bool-exp)])
-         (if #,(success? #'assertion)
-           #t
-           (error #,(format-failure #'assertion))))]))
+     (error-if-failure "Assertion error!"
+                       (make-assert #'bool-exp))]
+    [(assert description bool-exp)
+     (error-if-failure #`(string-append
+                           "Failed to assert \""
+                           description
+                           "\"!")
+                       (make-assert #'bool-exp))]))
 
-(assert (and (equal? '(1) '(1))
+(assert "basics"
+        (and (equal? '(0) '(1))
              (not (equal? '(1) '(2)))
              (= 1 1)
              (not (= 1 2))
