@@ -8,14 +8,15 @@
                   " does not equal? "
                   (pretty-format #,b))])
           (list 'failed (list message)))))
-  (define (make= a b)
-    #`(if (= #,a #,b)
+  (define (make= number-stx-list)
+    #`(if (= #,@number-stx-list)
         #t
         (let ([message
-                (string-append
-                  (pretty-format #,a)
-                  " does not = "
-                  (pretty-format #,b))])
+                (string-join (map pretty-format
+                                  (list  #,@number-stx-list))
+                             ", "
+                             #:before-last " and "
+                             #:after-last " are not =")])
           (list 'failed (list message)))))
   (define (make-combine-failure f1 f2)
     #`(list 'failed (append (cadr #,f1)
@@ -52,7 +53,7 @@
       bool-stx
       (equal? = and)
       [(equal? a b) (make-equal? #'a #'b)]
-      [(= a b) (make= #'a #'b)]
+      [(= a b ...) (make= (syntax->list #'(a b ...)))]
       [(and bools ...) (make-and (map make-assert
                                       (syntax->list #'(bools ...))))]
       [(or bools ...) (make-or (map make-assert
@@ -80,5 +81,5 @@
                                                (= 1 1))))
                             (list #'assert)))
 (assert (or (equal? '(1) '(2))
-            (and (= 1 2)
+            (and (= 1 2 2)
                  (= 1 1))))
