@@ -17,14 +17,10 @@
     #`(and (pair? #,assertion)
            (equal? (car #,assertion) 'failed)))
 
-  (define (make-equal? a b)
-    #`(if (equal? #,a #,b)
+  (define (make-predicate predicate args)
+    #`(if (#,predicate #,@args)
         #t
-        #,(create-failure (create-assertion-context #'equal? #`(list #,a #,b)))))
-  (define (make= number-stx-list)
-    #`(if (= #,@number-stx-list)
-        #t
-        #,(create-failure (create-assertion-context #'= #`(list #,@number-stx-list)))))
+        #,(create-failure (create-assertion-context predicate #`(list #,@args)))))
   (define (make-and assert-stx-list)
     #`(foldl
         (lambda (assertion acc)
@@ -52,13 +48,12 @@
   (define (make-assert bool-stx)
     (syntax-case
       bool-stx
-      (equal? = and)
-      [(equal? a b) (make-equal? #'a #'b)]
-      [(= a b ...) (make= (syntax->list #'(a b ...)))]
+      (and or)
       [(and bools ...) (make-and (map make-assert
                                       (syntax->list #'(bools ...))))]
       [(or bools ...) (make-or (map make-assert
-                                    (syntax->list #'(bools ...))))]))
+                                    (syntax->list #'(bools ...))))]
+      [(predicate args ...) (make-predicate #'predicate (syntax->list #'(args ...)))]))
   (define (color-red assert-stx)
     #`(string-append
         "\033[31m"
@@ -67,12 +62,13 @@
         "\033[0m"))
   (define (format-context context)
     #`(string-append
+        "("
+        (format "~a" (object-name #,(context-operation context)))
+        " "
         (string-join (map pretty-format
                           #,(context-args context))
-                     ", "
-                     #:before-last " and ")
-        " are not "
-        (pretty-format #,(context-operation context))))
+                     " ")
+        ") is false"))
   (define (format-failure assertion)
     (color-red #`(string-append
                    "Assertion error!\n  * "
@@ -93,5 +89,5 @@
                                                (= 1 1))))
                             (list #'assert)))
 (assert (or (equal? '(1) '(2))
-            (and (= 1 2 2)
+            (and (member 1 '(2 2 3))
                  (= 1 1))))
