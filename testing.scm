@@ -58,16 +58,21 @@
             ((equal? (car exprsn) 'or) (cons 'assert-or (map convert (cdr exprsn))))
             ((equal? (car exprsn) 'and) (cons 'assert-and (map convert (cdr exprsn))))
             (else (error "unexpected expression" exprsn))))
+    (define (color-red exprsn)
+      `(string-append
+         "\033[31m"
+         (string-join (string-split ,exprsn "\n")
+                      "\033[0m\n\033[31m")
+         "\033[0m"))
     (datum->syntax stx
-                   (let ((content (cadr (syntax->datum stx))))
-                     `(let ((result ,(convert content)))
+                   (let ((exprsn-to-assert (cadr (syntax->datum stx))))
+                     `(let ((result ,(convert exprsn-to-assert)))
                         (if (equal? #t result)
                           #t
-                          (error (string-append
-                                   "\033[31mAssertion error! \033[0m\n\033[31m  * "
-                                   (string-join (cadr result)
-                                                "\033[0m\n\033[31m  * ")
-                                   "\033[0m"))))))))
+                          (error ,(color-red '(string-append
+                                                "Assertion error!\n  * "
+                                                (string-join (cadr result)
+                                                             "\n  * "))))))))))
 
 (assert (or (equal? '(1) '(2))
             (= 1 2)))
