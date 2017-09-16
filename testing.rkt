@@ -73,16 +73,18 @@
                      #:before-last " and ")
         " are not "
         (pretty-format #,(context-operation context))))
+  (define (format-failure assertion)
+    (color-red #`(string-append
+                   "Assertion error!\n  * "
+                   (string-join (map (lambda (context) #,(format-context #'context))
+                                     #,(assertion-contexts assertion))
+                                "\n  * "))))
   (syntax-case stx ()
     [(assert bool-exp)
      #`(let ([assertion #,(make-assert #'bool-exp)])
          (if (equal? #t assertion)
            #t
-           (error #,(color-red #`(string-append
-                                   "Assertion error!\n  * "
-                                   (string-join (map (lambda (context) #,(format-context #'context))
-                                                     #,(assertion-contexts #'assertion))
-                                                "\n  * "))))))]))
+           (error #,(format-failure #'assertion))))]))
 
 
 (require macro-debugger/expand)
