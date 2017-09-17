@@ -82,3 +82,36 @@
 (assert "sample message is encoded"
         (equal? (encode '(A D A B B C A) sample-tree)
                 sample-message))
+
+; From the book
+(define (adjoin-set x set)
+  (cond ((null? set) (list x))
+        ((< (weight x) (weight (car set)))
+         (cons x set))
+        (else
+          (cons (car set)
+                (adjoin-set x (cdr set))))))
+
+(define (make-leaf-set pairs)
+  (if (null? pairs)
+    '()
+    (let ((pair (car pairs)))
+      (adjoin-set
+        (make-leaf (car pair)    ; symbol
+                   (cadr pair))  ; frequency
+        (make-leaf-set (cdr pairs))))))
+
+(define (generate-huffman-tree pairs)
+  (successive-merge
+    (make-leaf-set pairs)))
+
+; 2.69
+(define (successive-merge tree-set)
+  (if (null? (cdr tree-set))
+    (car tree-set)
+    (successive-merge (adjoin-set (make-code-tree (car tree-set) (cadr tree-set))
+                                  (cddr tree-set)))))
+
+(assert "generates sample-tree"
+        (equal? (generate-huffman-tree '((A 4) (B 2) (C 1) (D 1)))
+                sample-tree))
