@@ -115,3 +115,25 @@
 (assert "generates sample-tree"
         (equal? (generate-huffman-tree '((A 4) (B 2) (C 1) (D 1)))
                 sample-tree))
+
+; 2.70
+(define rock-tree (generate-huffman-tree '((A 2) (BOOM 1) (GET 2) (JOB 2)
+                                                 (NA 16) (SHA 3) (YIP 9) (WAH 1))))
+(define rock-message (append '(GET A JOB)
+                             '(SHA NA NA NA NA NA NA NA NA)
+                             '(GET A JOB)
+                             '(SHA NA NA NA NA NA NA NA NA)
+                             '(WAH YIP YIP YIP YIP)
+                             '(YIP YIP YIP YIP YIP)
+                             '(SHA BOOM)))
+
+(assert "encodes rock message efficiently"
+        (and (equal? (encode rock-message rock-tree)
+                     '(1 1 1 1 1 1 1 0 0 1 1 1 1 0 1 1 1 0 0 0 0 0 0 0 0 0 1 1
+                       1 1 1 1 1 0 0 1 1 1 1 0 1 1 1 0 0 0 0 0 0 0 0 0 1 1 0 1
+                       0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 1 1 0 1 1 0 1 1))
+             (= (length (encode rock-message rock-tree))
+                84)
+             (< (length (encode rock-message rock-tree))
+                ; with fixed-length code, every word would need 3 bits
+                (* 3 (length rock-message)))))
