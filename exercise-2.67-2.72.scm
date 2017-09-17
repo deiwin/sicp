@@ -1,3 +1,5 @@
+(load "testing.rkt")
+
 (define (make-leaf symbol weight)
   (list 'leaf symbol weight))
 (define (leaf? object)
@@ -61,3 +63,22 @@
 
 (decode sample-message sample-tree)
 ; '(A D A B B C A)
+
+; 2.68
+(define (encode-symbol symbol tree)
+  (cond ((and (leaf? tree) (equal? (symbol-leaf tree) symbol)) '())
+        ((member symbol (symbols (left-branch tree))) (cons 0 (encode-symbol symbol (left-branch tree))))
+        ((member symbol (symbols (right-branch tree))) (cons 1 (encode-symbol symbol (right-branch tree))))
+        (else (error "symbol" symbol "not encodable by tree" tree))))
+
+(define (encode message tree)
+  (if (null? message)
+    '()
+    (append
+      (encode-symbol (car message)
+                     tree)
+      (encode (cdr message) tree))))
+
+(assert "sample message is encoded"
+        (equal? (encode '(A D A B B C A) sample-tree)
+                sample-message))
