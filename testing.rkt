@@ -125,7 +125,7 @@
                        (make-assert #'bool-exp))]))
 
 (assert "basics"
-        (and (equal? '(0) '(1))
+        (and (equal? '(1) '(1))
              (not (equal? '(1) '(2)))
              (= 1 1)
              (not (= 1 2))
