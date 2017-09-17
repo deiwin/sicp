@@ -1,3 +1,5 @@
+(load "testing.rkt")
+
 ; Exercise 2.17: Define a procedure last-pair that returns the list that
 ; contains only the last element of a given (nonempty) list
 
@@ -165,18 +167,8 @@
       '(1)
       (new-row 0 (pascal (- n 1)))))
 
-(and (equal? (pascal 0) '(1))
-     (equal? (pascal 1) '(1 1))
-     (equal? (pascal 2) '(1 2 1))
-     (equal? (pascal 3) '(1 3 3 1)))
-
-(define (assert predicate a b)
-  (unless
-    (predicate a b)
-    (error (string-append
-             "Assertion error! Expected "
-             (pretty-format a)
-             " to " (pretty-format predicate) " "
-             (pretty-format b)))))
-
-(assert = 2 2.0)
+(assert "generates rows of the pascal diagram"
+        (and (equal? (pascal 0) '(1))
+             (equal? (pascal 1) '(1 1))
+             (equal? (pascal 2) '(1 2 1))
+             (equal? (pascal 3) '(1 3 3 1))))
