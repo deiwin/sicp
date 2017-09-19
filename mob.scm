@@ -110,9 +110,10 @@
     (else
      (+
       (coin-change-for amount (cdr coins))
-      (coin-change-for (- amount (car coins)) coins)))
-    )
-  )
+      (coin-change-for (- amount (car coins)) coins)))))
+; N = amount
+; M = nr of coins
+; O(2^(N+M))
 
 (define eesti-coins '(1 2 5 10 20 50 100 200))
 (define us-coins '(1 5 10 25 50))
@@ -172,3 +173,23 @@
              (equal? (pascal 1) '(1 1))
              (equal? (pascal 2) '(1 2 1))
              (equal? (pascal 3) '(1 3 3 1))))
+
+; Exercise 1.15: The sine of an angle (specified in radians) can be computed by making use of the approximation sin ⁡ x ≈ x if x is sufficiently small, and the trigonometric identity
+; sin ⁡ x = 3 sin ⁡ x 3 − 4 sin 3 ⁡ x 3
+; to reduce the size of the argument of sin. (For purposes of this exercise an angle is considered “sufficiently small” if its magnitude is not greater than 0.1 radians.) These ideas are incorporated in the following procedures:
+
+
+(define (cube x) (* x x x))
+(define (p x) (- (* 3 x) (* 4 (cube x))))
+(define (sine angle)
+   (display angle)
+   (display "\n")
+   (if (not (> (abs angle) 0.1))
+       angle
+       (p (sine (/ angle 3.0)))))
+
+(sine 1000)
+; O(log(a))
+; O(log(a))
+
+(log 10000 3)
