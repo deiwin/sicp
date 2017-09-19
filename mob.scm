@@ -250,3 +250,20 @@
 (assert "It multiplies"
   (and (= (fast-* 2 2) 4)
        (= (fast-* 5 6) 30)))
+
+;Exercise 1.18: Using the results of Exercise 1.16 and Exercise 1.17, devise a
+;procedure that generates an iterative process for multiplying two integers in
+;terms of adding, doubling, and halving and uses a logarithmic number of steps.
+
+(define (fast-*-iter a b)
+  (define (iter a b acc)
+    (cond ((= b 0) acc)
+          ((even? b) (iter (double a) (/ b 2) acc))
+          (else (iter a (- b 1) (+ acc a)))))
+
+  (iter a b 0))
+
+(assert "Is same as fast-*"
+  (and (= (fast-* 2 2) (fast-*-iter 2 2))
+       (= (fast-* 3 3) (fast-*-iter 3 3))
+       (= (fast-* 2 7) (fast-*-iter 2 7))))
