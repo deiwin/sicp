@@ -5,6 +5,11 @@
 (define (leaf? object)
   (eq? (car object) 'leaf))
 
+(define (symbols tree)
+  (if (leaf? tree)
+    (list (symbol-leaf tree))
+    (caddr tree)))
+
 (define (symbol-leaf x) (cadr x))
 (define (weight-leaf x) (caddr x))
 (define (make-code-tree left right)
@@ -16,11 +21,6 @@
 
 (define (left-branch tree) (car tree))
 (define (right-branch tree) (cadr tree))
-
-(define (symbols tree)
-  (if (leaf? tree)
-    (list (symbol-leaf tree))
-    (caddr tree)))
 
 (define (weight tree)
   (if (leaf? tree)
