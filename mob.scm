@@ -314,3 +314,10 @@
          (= (fib 6) 8)
          (= (fib 1200000) (+ (fib 1199999) (fib 1199998)))))
 ; 227 steps
+
+(define (prime? x)
+  (define (iter n)
+    (cond ((= n 1) #t)
+          ((= (remainder x n) 0) #f)
+          (else (iter (- n 1)))))
+  (iter (integer-sqrt x)))
