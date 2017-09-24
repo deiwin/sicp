@@ -31,6 +31,11 @@
     #`(and (pair? #,assertion)
            (equal? (car #,assertion) 'passed)))
 
+  (define (map-last proc lst)
+    (cond [(null? lst) '()]
+          [(null? (cdr lst)) (list (proc (car lst)))]
+          [else (cons (car lst) (map-last proc (cdr lst)))]))
+
   (define (make-predicate predicate args)
     #`(if (#,predicate #,@args)
         #,(create-success #`(list #,(create-assertion-context
@@ -85,11 +90,11 @@
                                     (syntax->list #'(bools ...))))]
       [(not bool) (make-not (make-assert #'bool))]
       [(let ([id val-expr] ...) bodys ...) #`(let ([id val-expr] ...)
-                                               #,@(map make-assert
-                                                       (syntax->list #'(bodys ...))))]
+                                               #,@(map-last make-assert
+                                                            (syntax->list #'(bodys ...))))]
       [(let* ([id val-expr] ...) bodys ...) #`(let* ([id val-expr] ...)
-                                                #,@(map make-assert
-                                                        (syntax->list #'(bodys ...))))]
+                                                #,@(map-last make-assert
+                                                             (syntax->list #'(bodys ...))))]
       [(predicate args ...) (make-predicate #'predicate (syntax->list #'(args ...)))]))
   (define (color-red assert-stx)
     #`(string-append
@@ -157,6 +162,9 @@
 (assert "let and let*"
         (and (let ([a 1])
                (= 1 a))
+             (let ([a 1])
+               (set! a 2)
+               (= 2 a))
              (let* ([a 1]
                     [b (+ a 2)])
                (= 3 b))))
