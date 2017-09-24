@@ -96,18 +96,19 @@
                                                 #,@(map-last make-assert
                                                              (syntax->list #'(bodys ...))))]
       [(predicate args ...) (make-predicate #'predicate (syntax->list #'(args ...)))]))
-  (define (color-red assert-stx)
+  (define (color-text color text)
     #`(string-append
-        "\033[31m"
-        (string-join (string-split #,assert-stx "\n")
-                     "\033[0m\n\033[31m")
+        "\033["
+        #,color
+        (string-join (string-split #,text "\n")
+                     (string-append
+                       "\033[0m\n\033["
+                       #,color))
         "\033[0m"))
-  (define (color-yellow assert-stx)
-    #`(string-append
-        "\033[33m"
-        (string-join (string-split #,assert-stx "\n")
-                     "\033[0m\n\033[33m")
-        "\033[0m"))
+  (define (color-red text)
+    (color-text "31m" text))
+  (define (color-yellow text)
+    (color-text "33m" text))
   (define (format-context context)
     #`(string-append
         "("
