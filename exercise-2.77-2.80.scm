@@ -12,6 +12,7 @@
        (lambda (x y) (tag (* x y))))
   (put 'div '(number number)
        (lambda (x y) (tag (/ x y))))
+  (put 'equ? '(number number) =)
   (put 'make 'number
        (lambda (x) (tag x)))
   'done)
@@ -40,6 +41,10 @@
   (define (div-rat x y)
     (make-rat (* (numer x) (denom y))
               (* (denom x) (numer y))))
+  (define (equ? x y)
+    ; Assuming they're normalized by `make-rat`
+    (and (= (numer x) (numer y))
+         (= (denom x) (denom y))))
   ;; interface to rest of the system
   (define (tag x) (attach-tag 'rational x))
   (put 'add '(rational rational)
@@ -50,6 +55,7 @@
        (lambda (x y) (tag (mul-rat x y))))
   (put 'div '(rational rational)
        (lambda (x y) (tag (div-rat x y))))
+  (put 'equ? '(rational rational) equ?)
   (put 'make 'rational
        (lambda (n d) (tag (make-rat n d))))
   'done)
@@ -145,6 +151,9 @@
     (make-from-mag-ang
       (/ (magnitude z1) (magnitude z2))
       (- (angle z1) (angle z2))))
+  (define (equ? z1 z2)
+    (and (= (real-part z1) (real-part z2))
+         (= (imag-part z1) (imag-part z2))))
   ;; interface to rest of the system
   (define (tag z) (attach-tag 'complex z))
   (put 'add '(complex complex)
@@ -159,6 +168,7 @@
   (put 'div '(complex complex)
        (lambda (z1 z2)
          (tag (div-complex z1 z2))))
+  (put 'equ? '(complex complex) equ?)
   (put 'make-from-real-imag 'complex
        (lambda (x y)
          (tag (make-from-real-imag x y))))
@@ -180,6 +190,7 @@
 (define sub (curry apply-generic 'sub))
 (define mul (curry apply-generic 'mul))
 (define div (curry apply-generic 'div))
+(define equ? (curry apply-generic 'equ?))
 
 (install-scheme-number-package)
 (install-rational-package)
@@ -199,3 +210,11 @@
 (assert "can add and multiply ordinary/primitive scheme numbers"
         (and (= 3 (add 1 2))
              (= 2 (mul 1 2))))
+
+(assert "can check equality of different types of numbers"
+        (and (equ? 3 (add 1 2))
+             (equ? (make-rational 3 5)
+                   (add (make-rational 1 5) (make-rational 2 5)))
+             (equ? (make-complex-from-real-imag 3 12)
+                   (add (make-complex-from-real-imag 1 4)
+                        (make-complex-from-real-imag 2 8)))))
