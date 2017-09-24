@@ -36,6 +36,12 @@
           [(null? (cdr lst)) (list (proc (car lst)))]
           [else (cons (car lst) (map-last proc (cdr lst)))]))
 
+  (define (map-first proc lst)
+    (if (null? lst)
+      '()
+      (cons (proc (car lst))
+            (cdr lst))))
+
   (define (make-predicate predicate args)
     #`(if (#,predicate #,@args)
         #,(create-success #`(list #,(create-assertion-context
@@ -83,7 +89,7 @@
   (define (make-assert bool-stx)
     (syntax-case
       bool-stx
-      (and or not let let*)
+      (and or not let let* begin begin0)
       [(and bools ...) (make-and (map make-assert
                                       (syntax->list #'(bools ...))))]
       [(or bools ...) (make-or (map make-assert
@@ -95,6 +101,10 @@
       [(let* ([id val-expr] ...) bodys ...) #`(let* ([id val-expr] ...)
                                                 #,@(map-last make-assert
                                                              (syntax->list #'(bodys ...))))]
+      [(begin exprs ...) #`(begin #,@(map-last make-assert
+                                               (syntax->list #'(exprs ...))))]
+      [(begin0 exprs ...) #`(begin0 #,@(map-first make-assert
+                                                  (syntax->list #'(exprs ...))))]
       [(predicate args ...) (make-predicate #'predicate (syntax->list #'(args ...)))]))
   (define (color-text color text)
     #`(string-append
@@ -185,3 +195,11 @@
              (let* ([a 1]
                     [b (+ a 2)])
                (= 3 b))))
+
+(assert "begin and begin0"
+        (and (begin
+               'whatever
+               (= 1 1))
+             (begin0
+               (= 2 2)
+               'whatever)))
