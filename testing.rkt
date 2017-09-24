@@ -78,12 +78,18 @@
   (define (make-assert bool-stx)
     (syntax-case
       bool-stx
-      (and or not)
+      (and or not let let*)
       [(and bools ...) (make-and (map make-assert
                                       (syntax->list #'(bools ...))))]
       [(or bools ...) (make-or (map make-assert
                                     (syntax->list #'(bools ...))))]
       [(not bool) (make-not (make-assert #'bool))]
+      [(let ([id val-expr] ...) bodys ...) #`(let ([id val-expr] ...)
+                                               #,@(map make-assert
+                                                       (syntax->list #'(bodys ...))))]
+      [(let* ([id val-expr] ...) bodys ...) #`(let* ([id val-expr] ...)
+                                                #,@(map make-assert
+                                                        (syntax->list #'(bodys ...))))]
       [(predicate args ...) (make-predicate #'predicate (syntax->list #'(args ...)))]))
   (define (color-red assert-stx)
     #`(string-append
@@ -147,3 +153,10 @@
                        (= 3 4)))
              (not (and (= 3 4)
                        (= 3 4)))))
+
+(assert "let and let*"
+        (and (let ([a 1])
+               (= 1 a))
+             (let* ([a 1]
+                    [b (+ a 2)])
+               (= 3 b))))
