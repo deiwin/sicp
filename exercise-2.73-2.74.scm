@@ -109,3 +109,57 @@
                     (deriv '(* (* x y) (+ x 3)) 'x))
             (equal? '(+ (* (* x y) (* 3 (** x 2))) (* y (** x 3)))
                     (deriv '(* (* x y) (** x 3)) 'x)))))
+
+(define (attach-tag type-tag contents)
+  (cons type-tag contents))
+
+(define (type-tag datum)
+  (cond ((pair? datum) (car datum))
+        ((string? datum) 'string)
+        (else (error "Bad tagged datum:
+                     TYPE-TAG" datum))))
+
+(define (contents datum)
+  (cond ((pair? datum) (cdr datum))
+        ((string? datum) datum)
+        (else (error "Bad tagged datum:
+                     CONTENTS" datum))))
+
+(define (apply-generic op . args)
+  (let ((type-tags (map type-tag args)))
+    (let ((proc (get op type-tags)))
+      (if proc
+        (apply proc (map contents args))
+        (error
+          "No method for these types:
+          APPLY-GENERIC"
+          (list op type-tags))))))
+
+(define (proxy-to-type type op)
+  (lambda args
+    (apply (get op type)
+           args)))
+
+(define get-record (curry apply-generic 'get-record))
+
+(define create-personell-file-from-names
+  (proxy-to-type 'division-a 'create-personell-file-from-names))
+
+(define (install-division-a)
+  ;; internal procedures
+  (define create-personell-file-from-names list)
+  (define (get-record name file)
+    (car (member name file)))
+  ;; interface to the rest of the system
+  (put 'create-personell-file-from-names 'division-a
+       (lambda args
+         (attach-tag 'division-a-personell-file
+                     (apply create-personell-file-from-names args))))
+  (put 'get-record '(string division-a-personell-file) get-record))
+
+(assert "can find record from division A personell file"
+        (begin
+          (install-division-a)
+          (let ((personell-file (create-personell-file-from-names "Eva Luator"
+                                                                  "Alice P. Hacker")))
+            (equal? "Eva Luator" (get-record "Eva Luator" personell-file)))))
