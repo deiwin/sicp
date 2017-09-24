@@ -102,6 +102,12 @@
         (string-join (string-split #,assert-stx "\n")
                      "\033[0m\n\033[31m")
         "\033[0m"))
+  (define (color-yellow assert-stx)
+    #`(string-append
+        "\033[33m"
+        (string-join (string-split #,assert-stx "\n")
+                     "\033[0m\n\033[33m")
+        "\033[0m"))
   (define (format-context context)
     #`(string-append
         "("
@@ -124,7 +130,17 @@
         (if #,(success? #'assertion)
           #t
           (error #,(format-failure message #'assertion)))))
+  (define (warn-pending message)
+    #`(begin
+        (display #,(color-yellow message))
+        (newline)))
   (syntax-case stx ()
+    [(assert description)
+     (string? (syntax-e #'description))
+     (warn-pending #'(string-append
+                       "Pending assertion \""
+                       description
+                       "\"!"))]
     [(assert bool-exp)
      (error-if-failure "Assertion error!"
                        (make-assert #'bool-exp))]
