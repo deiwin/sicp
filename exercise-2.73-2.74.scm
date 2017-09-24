@@ -144,6 +144,14 @@
 (define get-salary (curry apply-generic 'get-salary))
 (define get-name (curry apply-generic 'get-name))
 
+(define (find-employee-record name personell-files)
+  (if (null? personell-files)
+    #f
+    (let ((record (get-record name (car personell-files))))
+      (if record
+        record
+        (find-employee-record name (cdr personell-files))))))
+
 (define create-personell-file-from-names
   (proxy-to-type 'division-a 'create-personell-file-from-names))
 (define create-personell-file-from-records
@@ -186,7 +194,10 @@
 (assert "finds record from division A personell file"
         (let ((personell-file (create-personell-file-from-names "Eva Luator"
                                                                 "Alice P. Hacker")))
-          (equal? "Eva Luator" (get-name (get-record "Eva Luator" personell-file)))))
+          (and (equal? "Eva Luator" (get-name (get-record "Eva Luator" personell-file)))
+               (let ((empty-file (create-personell-file-from-names)))
+                 (equal? "Alice P. Hacker" (get-name (find-employee-record "Alice P. Hacker"
+                                                                           (list empty-file personell-file))))))))
 (assert "finds salary from division A record"
         (let* ((record1 (create-record-from-name-salary "Eva Luator" 100))
                (record2 (create-record-from-name-salary "Alice P. Hacker" 250))
