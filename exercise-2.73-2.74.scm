@@ -64,6 +64,12 @@
           ((and (number? m1) (number? m2))
            (* m1 m2))
           (else (list '* m1 m2))))
+  (define (make-exponentiation base exponent)
+    (cond ((=number? exponent 0) 1)
+          ((=number? exponent 1) base)
+          ((and (number? base) (number? exponent))
+           (expt base exponent))
+          (else (list '** base exponent))))
   (define (deriv+ operands var)
     (let ((addend (car operands))
           (augend (cadr operands)))
@@ -79,13 +85,27 @@
         (make-product
           (deriv multiplier var)
           multiplicand))))
+  (define (deriv** operands var)
+    (let ((base (car operands))
+          (exponent (cadr operands)))
+      (make-product
+        exponent
+        (make-product
+          (make-exponentiation
+            base
+            (make-sum exponent -1))
+          (deriv base var)))))
   ;; interface to the rest of the system
   (put 'deriv '+ deriv+)
   (put 'deriv '* deriv*)
+  (put 'deriv '** deriv**)
   'done)
 
 (assert "differentiates by dispatching on type"
         (begin
           (install-deriv-ops)
-          (equal? '(+ (* x y) (* y (+ x 3)))
-                  (deriv '(* (* x y) (+ x 3)) 'x))))
+          (and
+            (equal? '(+ (* x y) (* y (+ x 3)))
+                    (deriv '(* (* x y) (+ x 3)) 'x))
+            (equal? '(+ (* (* x y) (* 3 (** x 2))) (* y (** x 3)))
+                    (deriv '(* (* x y) (** x 3)) 'x)))))
