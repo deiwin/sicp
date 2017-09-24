@@ -41,7 +41,7 @@
          (if (same-variable? exp var)
            1
            0))
-        (else ((get 'deriv (operator exp))
+        (else ((get (operator exp) 'deriv)
                (operands exp)
                var))))
 
@@ -96,9 +96,9 @@
             (make-sum exponent -1))
           (deriv base var)))))
   ;; interface to the rest of the system
-  (put 'deriv '+ deriv+)
-  (put 'deriv '* deriv*)
-  (put 'deriv '** deriv**)
+  (put '+ 'deriv deriv+)
+  (put '* 'deriv deriv*)
+  (put '** 'deriv deriv**)
   'done)
 
 (assert "differentiates by dispatching on type"
