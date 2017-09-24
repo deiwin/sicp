@@ -141,25 +141,55 @@
            args)))
 
 (define get-record (curry apply-generic 'get-record))
+(define get-salary (curry apply-generic 'get-salary))
+(define get-name (curry apply-generic 'get-name))
 
 (define create-personell-file-from-names
   (proxy-to-type 'division-a 'create-personell-file-from-names))
+(define create-personell-file-from-records
+  (proxy-to-type 'division-a 'create-personell-file-from-records))
+(define create-record-from-name-salary
+  (proxy-to-type 'division-a 'create-record-from-name-salary))
 
 (define (install-division-a)
   ;; internal procedures
-  (define create-personell-file-from-names list)
+  (define (create-personell-file-from-names . names)
+    (attach-tag
+      'division-a-personell-file
+      (map (lambda (name)
+             (create-record name 0))
+           names)))
+  (define (create-personell-file-from-records . records)
+    (attach-tag
+      'division-a-personell-file
+      records))
   (define (get-record name file)
-    (car (member name file)))
+    (findf (lambda (record)
+             (equal? name (get-name record)))
+           file))
+
+  (define (create-record name salary)
+    (attach-tag
+      'division-a-record
+      (cons name salary)))
+  (define (name-record record) (car record))
+  (define (salary-record record) (cdr record))
   ;; interface to the rest of the system
-  (put 'create-personell-file-from-names 'division-a
-       (lambda args
-         (attach-tag 'division-a-personell-file
-                     (apply create-personell-file-from-names args))))
+  (put 'create-personell-file-from-names 'division-a create-personell-file-from-names)
+  (put 'create-personell-file-from-records 'division-a create-personell-file-from-records)
+  (put 'create-record-from-name-salary 'division-a create-record)
+  (put 'get-name '(division-a-record) name-record)
+  (put 'get-salary '(division-a-record) salary-record)
   (put 'get-record '(string division-a-personell-file) get-record))
 
-(assert "can find record from division A personell file"
-        (begin
-          (install-division-a)
-          (let ((personell-file (create-personell-file-from-names "Eva Luator"
-                                                                  "Alice P. Hacker")))
-            (equal? "Eva Luator" (get-record "Eva Luator" personell-file)))))
+(install-division-a)
+(assert "finds record from division A personell file"
+        (let ((personell-file (create-personell-file-from-names "Eva Luator"
+                                                                "Alice P. Hacker")))
+          (equal? "Eva Luator" (get-name (get-record "Eva Luator" personell-file)))))
+(assert "finds salary from division A record"
+        (let* ((record1 (create-record-from-name-salary "Eva Luator" 100))
+               (record2 (create-record-from-name-salary "Alice P. Hacker" 250))
+               (personell-file (create-personell-file-from-records record1 record2)))
+          (and (= 100 (get-salary (get-record "Eva Luator" personell-file)))
+               (= 250 (get-salary (get-record "Alice P. Hacker" personell-file))))))
