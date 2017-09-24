@@ -2,6 +2,9 @@
 (load "generics.scm")
 
 (define (install-scheme-number-package)
+  ;; internal procedures
+  (define (=zero? x) (= 0 x))
+  ;; interface to rest of the system
   (define (tag x)
     (attach-tag 'number x))
   (put 'add '(number number)
@@ -13,6 +16,7 @@
   (put 'div '(number number)
        (lambda (x y) (tag (/ x y))))
   (put 'equ? '(number number) =)
+  (put '=zero? '(number) =zero?)
   (put 'make 'number
        (lambda (x) (tag x)))
   'done)
@@ -45,6 +49,8 @@
     ; Assuming they're normalized by `make-rat`
     (and (= (numer x) (numer y))
          (= (denom x) (denom y))))
+  (define (=zero? x)
+    (= 0 (numer x)))
   ;; interface to rest of the system
   (define (tag x) (attach-tag 'rational x))
   (put 'add '(rational rational)
@@ -56,6 +62,7 @@
   (put 'div '(rational rational)
        (lambda (x y) (tag (div-rat x y))))
   (put 'equ? '(rational rational) equ?)
+  (put '=zero? '(rational) =zero?)
   (put 'make 'rational
        (lambda (n d) (tag (make-rat n d))))
   'done)
@@ -63,6 +70,7 @@
 (define make-rational
   (proxy-to-type 'rational 'make))
 
+(define (square x) (* x x))
 (define (install-rectangular-package)
   ;; internal procedures
   (define (real-part z) (car z))
@@ -154,6 +162,7 @@
   (define (equ? z1 z2)
     (and (= (real-part z1) (real-part z2))
          (= (imag-part z1) (imag-part z2))))
+  (define (=zero? z) (= 0 (magnitude z)))
   ;; interface to rest of the system
   (define (tag z) (attach-tag 'complex z))
   (put 'add '(complex complex)
@@ -169,6 +178,7 @@
        (lambda (z1 z2)
          (tag (div-complex z1 z2))))
   (put 'equ? '(complex complex) equ?)
+  (put '=zero? '(complex) =zero?)
   (put 'make-from-real-imag 'complex
        (lambda (x y)
          (tag (make-from-real-imag x y))))
@@ -191,6 +201,7 @@
 (define mul (curry apply-generic 'mul))
 (define div (curry apply-generic 'div))
 (define equ? (curry apply-generic 'equ?))
+(define =zero? (curry apply-generic '=zero?))
 
 (install-scheme-number-package)
 (install-rational-package)
@@ -218,3 +229,12 @@
              (equ? (make-complex-from-real-imag 3 12)
                    (add (make-complex-from-real-imag 1 4)
                         (make-complex-from-real-imag 2 8)))))
+
+(assert "can check for zero of different types of numbers"
+        (and (=zero? 0)
+             (not (=zero? 1))
+             (=zero? (make-rational 0 5))
+             (not (=zero? (make-rational 1 5)))
+             (=zero? (make-complex-from-mag-ang 0 1))
+             (=zero? (make-complex-from-real-imag 0 0))
+             (not (=zero? (make-complex-from-mag-ang 1 0)))))
