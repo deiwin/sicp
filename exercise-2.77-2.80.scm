@@ -3,21 +3,21 @@
 
 (define (install-scheme-number-package)
   (define (tag x)
-    (attach-tag 'scheme-number x))
-  (put 'add '(scheme-number scheme-number)
+    (attach-tag 'number x))
+  (put 'add '(number number)
        (lambda (x y) (tag (+ x y))))
-  (put 'sub '(scheme-number scheme-number)
+  (put 'sub '(number number)
        (lambda (x y) (tag (- x y))))
-  (put 'mul '(scheme-number scheme-number)
+  (put 'mul '(number number)
        (lambda (x y) (tag (* x y))))
-  (put 'div '(scheme-number scheme-number)
+  (put 'div '(number number)
        (lambda (x y) (tag (/ x y))))
-  (put 'make 'scheme-number
+  (put 'make 'number
        (lambda (x) (tag x)))
   'done)
 
 (define make-scheme-number
-  (proxy-to-type 'scheme-number 'make))
+  (proxy-to-type 'number 'make))
 
 (define (install-rational-package)
   ;; internal procedures
@@ -195,3 +195,7 @@
 
 (assert "can get magnitude of complex numbers"
         (= 1 (magnitude (make-complex-from-mag-ang 1 2))))
+
+(assert "can add and multiply ordinary/primitive scheme numbers"
+        (and (= 3 (add 1 2))
+             (= 2 (mul 1 2))))
