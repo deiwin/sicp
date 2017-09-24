@@ -26,3 +26,66 @@
 (define (get op type) (get-table op type global-table))
 (define (put op type val)
   (set! global-table (put-table op type val global-table)))
+
+(define (operator exp) (car exp))
+(define (operands exp) (cdr exp))
+(define (variable? x) (symbol? x))
+(define (same-variable? v1 v2)
+  (and (variable? v1)
+       (variable? v2)
+       (eq? v1 v2)))
+
+(define (deriv exp var)
+  (cond ((number? exp) 0)
+        ((variable? exp)
+         (if (same-variable? exp var)
+           1
+           0))
+        (else ((get 'deriv (operator exp))
+               (operands exp)
+               var))))
+
+(define (install-deriv-ops)
+  ;; internal procedures
+  (define (=number? exp num)
+    (and (number? exp) (= exp num)))
+  (define (make-sum a1 a2)
+    (cond ((=number? a1 0) a2)
+          ((=number? a2 0) a1)
+          ((and (number? a1) (number? a2))
+           (+ a1 a2))
+          (else (list '+ a1 a2))))
+  (define (make-product m1 m2)
+    (cond ((or (=number? m1 0)
+               (=number? m2 0))
+           0)
+          ((=number? m1 1) m2)
+          ((=number? m2 1) m1)
+          ((and (number? m1) (number? m2))
+           (* m1 m2))
+          (else (list '* m1 m2))))
+  (define (deriv+ operands var)
+    (let ((addend (car operands))
+          (augend (cadr operands)))
+      (make-sum (deriv addend var)
+                (deriv augend var))))
+  (define (deriv* operands var)
+    (let ((multiplier (car operands))
+          (multiplicand (cadr operands)))
+      (make-sum
+        (make-product
+          multiplier
+          (deriv multiplicand var))
+        (make-product
+          (deriv multiplier var)
+          multiplicand))))
+  ;; interface to the rest of the system
+  (put 'deriv '+ deriv+)
+  (put 'deriv '* deriv*)
+  'done)
+
+(assert "differentiates by dispatching on type"
+        (begin
+          (install-deriv-ops)
+          (equal? '(+ (* x y) (* y (+ x 3)))
+                  (deriv '(* (* x y) (+ x 3)) 'x))))
