@@ -287,7 +287,6 @@
   (fib-iter 1 0 0 1 n))
 
 (define (fib-iter a b p q count)
-  (display ".")
   (cond ((= count 0)
          b)
         ((even? count)
