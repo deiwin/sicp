@@ -373,3 +373,17 @@
 (assert "can product"
         (and (= 120 (acc-product identity 1 add1 5))
              (= 6 (acc-product identity 1 add1 3))))
+
+(define (filter-accumulate combiner null-value filter term a next b)
+  (define (iter a result)
+    (cond ((> a b) result)
+          ((filter a) (iter (next a) (combiner result (term a))))
+          (else (iter (next a) result))))
+  (iter a null-value))
+
+(define (sum-square-primes a b)
+  (filter-accumulate + 0 prime? square a add1 b))
+
+(assert "squares primes and does the sum"
+  (and (= 14 (sum-square-primes 1 3))
+       (= 39 (sum-square-primes 1 5))))
