@@ -387,3 +387,11 @@
 (assert "squares primes and does the sum"
   (and (= 14 (sum-square-primes 1 3))
        (= 39 (sum-square-primes 1 5))))
+
+(define (product-relative-primes n)
+  (define (relative-prime? i) (= 1 (gcd n i)))
+  (filter-accumulate * 1 relative-prime? identity 1 add1 n))
+
+(assert "product relative primes of n"
+  (and (= 105 (product-relative-primes 8))
+       (= 24 (product-relative-primes 5))))
