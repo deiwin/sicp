@@ -447,3 +447,15 @@
 
 (assert "close to golden ratio"
         (< (abs (- golden-ratio (approx-golden-ratio 11))) 0.0001))
+
+; 1, 2, 1, 1, 4, 1, 1, 6, 1, 1, 8, ...
+(define (approx-e k)
+  (define (d x)
+    (if (< (remainder x 3) 2)
+        1
+        (* 2 (+ 1 (quotient x 3)))))
+  (define n (const 1))
+  (+ 2.0 (cont-frac n d k)))
+
+(approx-e 1000)
+; 2.71828
