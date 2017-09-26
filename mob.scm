@@ -427,3 +427,23 @@
                   2))
              2)
 ; 9 steps
+
+(define golden-ratio 1.6180)
+
+(define (cont-frac n d k)
+  (define (iter i)
+    (if (> i k)
+      0
+      (/ (n i) (+ (d i) (iter (+ i 1))))))
+  (iter 1))
+
+
+(define (approx-golden-ratio k)
+  (/ 1
+     (cont-frac
+       (lambda (i) 1.0)
+       (lambda (i) 1.0)
+       k)))
+
+(assert "close to golden ratio"
+        (< (abs (- golden-ratio (approx-golden-ratio 11))) 0.0001))
