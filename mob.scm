@@ -320,3 +320,15 @@
           ((= (remainder x n) 0) #f)
           (else (iter (- n 1)))))
   (iter (integer-sqrt x)))
+
+; 1.30
+(define (sum term a next b)
+  (define (iter a result)
+    (if (> a b)
+      result
+      (iter (next a) (+ result (term a)))))
+  (iter a 0))
+
+(assert "can sum"
+        (and (= 15 (sum identity 1 add1 5))
+             (= 13 (sum square 2 add1 3))))
