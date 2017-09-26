@@ -31,6 +31,17 @@
     #`(and (pair? #,assertion)
            (equal? (car #,assertion) 'passed)))
 
+  (define (map-last proc lst)
+    (cond [(null? lst) '()]
+          [(null? (cdr lst)) (list (proc (car lst)))]
+          [else (cons (car lst) (map-last proc (cdr lst)))]))
+
+  (define (map-first proc lst)
+    (if (null? lst)
+      '()
+      (cons (proc (car lst))
+            (cdr lst))))
+
   (define (make-predicate predicate args)
     #`(if (#,predicate #,@args)
         #,(create-success #`(list #,(create-assertion-context
@@ -78,19 +89,36 @@
   (define (make-assert bool-stx)
     (syntax-case
       bool-stx
-      (and or not)
+      (and or not let let* begin begin0)
       [(and bools ...) (make-and (map make-assert
                                       (syntax->list #'(bools ...))))]
       [(or bools ...) (make-or (map make-assert
                                     (syntax->list #'(bools ...))))]
       [(not bool) (make-not (make-assert #'bool))]
+      [(let ([id val-expr] ...) bodys ...) #`(let ([id val-expr] ...)
+                                               #,@(map-last make-assert
+                                                            (syntax->list #'(bodys ...))))]
+      [(let* ([id val-expr] ...) bodys ...) #`(let* ([id val-expr] ...)
+                                                #,@(map-last make-assert
+                                                             (syntax->list #'(bodys ...))))]
+      [(begin exprs ...) #`(begin #,@(map-last make-assert
+                                               (syntax->list #'(exprs ...))))]
+      [(begin0 exprs ...) #`(begin0 #,@(map-first make-assert
+                                                  (syntax->list #'(exprs ...))))]
       [(predicate args ...) (make-predicate #'predicate (syntax->list #'(args ...)))]))
-  (define (color-red assert-stx)
+  (define (color-text color text)
     #`(string-append
-        "\033[31m"
-        (string-join (string-split #,assert-stx "\n")
-                     "\033[0m\n\033[31m")
+        "\033["
+        #,color
+        (string-join (string-split #,text "\n")
+                     (string-append
+                       "\033[0m\n\033["
+                       #,color))
         "\033[0m"))
+  (define (color-red text)
+    (color-text "31m" text))
+  (define (color-yellow text)
+    (color-text "33m" text))
   (define (format-context context)
     #`(string-append
         "("
@@ -113,7 +141,17 @@
         (if #,(success? #'assertion)
           #t
           (error #,(format-failure message #'assertion)))))
+  (define (warn-pending message)
+    #`(begin
+        (display #,(color-yellow message))
+        (newline)))
   (syntax-case stx ()
+    [(assert description)
+     (string? (syntax-e #'description))
+     (warn-pending #'(string-append
+                       "Pending assertion \""
+                       description
+                       "\"!"))]
     [(assert bool-exp)
      (error-if-failure "Assertion error!"
                        (make-assert #'bool-exp))]
@@ -147,3 +185,21 @@
                        (= 3 4)))
              (not (and (= 3 4)
                        (= 3 4)))))
+
+(assert "let and let*"
+        (and (let ([a 1])
+               (= 1 a))
+             (let ([a 1])
+               (set! a 2)
+               (= 2 a))
+             (let* ([a 1]
+                    [b (+ a 2)])
+               (= 3 b))))
+
+(assert "begin and begin0"
+        (and (begin
+               'whatever
+               (= 1 1))
+             (begin0
+               (= 2 2)
+               'whatever)))
