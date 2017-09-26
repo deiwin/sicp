@@ -353,3 +353,23 @@
   (* 4.0 (product term 1 add1 n)))
 
 (assert "get pi" (< (abs (- pi (approx-pi 1000))) 0.001))
+
+
+(define (accumulate combiner null-value term a next b)
+  (define (iter a result)
+    (if (> a b)
+      result
+      (iter (next a) (combiner result (term a)))))
+  (iter a null-value))
+
+(define acc-sum (curry accumulate + 0))
+
+(assert "can sum"
+        (and (= 15 (acc-sum identity 1 add1 5))
+             (= 13 (acc-sum square 2 add1 3))))
+
+(define acc-product (curry accumulate * 1))
+
+(assert "can product"
+        (and (= 120 (acc-product identity 1 add1 5))
+             (= 6 (acc-product identity 1 add1 3))))
