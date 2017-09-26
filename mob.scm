@@ -395,3 +395,8 @@
 (assert "product relative primes of n"
   (and (= 105 (product-relative-primes 8))
        (= 24 (product-relative-primes 5))))
+
+(define (f g) (g 2))
+; (f (lambda (g) (g 2)))
+; ((lambda (g) (g 2)) 2)
+; (2 2)
