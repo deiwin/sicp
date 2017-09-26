@@ -332,3 +332,24 @@
 (assert "can sum"
         (and (= 15 (sum identity 1 add1 5))
              (= 13 (sum square 2 add1 3))))
+
+; 1.31
+(define (product term a next b)
+  (define (iter a result)
+    (if (> a b)
+      result
+      (iter (next a) (* result (term a)))))
+  (iter a 1))
+
+(define (factorial n)
+  (product identity 1 add1 n))
+
+(assert "calculates factorials" (= 120 (factorial 5)))
+
+(define (approx-pi n)
+  (define (term i)
+    (/ (* 4 i (+ i 1))
+       (square (+ (* 2 i) 1))))
+  (* 4.0 (product term 1 add1 n)))
+
+(assert "get pi" (< (abs (- pi (approx-pi 1000))) 0.001))
