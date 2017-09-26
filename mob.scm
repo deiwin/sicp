@@ -459,3 +459,12 @@
 
 (approx-e 1000)
 ; 2.71828
+
+(define (tan-cf x k)
+  (define (n _i) (* -1 (square x)))
+  (define (d i) (- (* 2 i) 1))
+  (/ (* -1 (cont-frac n d k)) x))
+
+
+(assert "close to dat tan"
+        (< (abs (- (tan 1.5) (tan-cf 1.5 100))) 0.0001))
