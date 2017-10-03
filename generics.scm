@@ -65,27 +65,39 @@
     (let ((proc (get op type-tags)))
       (if proc
         (apply proc (map contents args))
-        (if (= (length args) 2)
-          (let ((type1 (car type-tags))
-                (type2 (cadr type-tags))
-                (a1 (car args))
-                (a2 (cadr args)))
-            (if (equal? type1 type2)
-              (fail)
-              (let ((t1->t2
-                      (get-coercion type1
-                                    type2))
-                    (t2->t1
-                      (get-coercion type2
-                                    type1)))
-                (cond (t1->t2
-                        (apply-generic
-                          op (t1->t2 a1) a2))
-                      (t2->t1
-                        (apply-generic
-                          op a1 (t2->t1 a2)))
-                      (else (fail))))))
-          (fail))))))
+        (letrec ((can-coerce-args-to
+                   (lambda (to-type)
+                     (andmap (lambda (from-type)
+                               (or (equal? from-type to-type)
+                                   (get-coercion from-type to-type)))
+                             type-tags)))
+                 (coerce-args-to
+                   (lambda (to-type)
+                     (map (lambda (arg)
+                            (let ((from-type (type-tag arg)))
+                              (if (equal? to-type from-type)
+                                arg
+                                ((get-coercion from-type to-type) arg))))
+                          args)))
+                 (all-args-of-type
+                   (lambda (ref-type)
+                     (andmap (lambda (type)
+                               (equal? ref-type type))
+                             type-tags)))
+                 (coerce-iter
+                   (lambda (types-to-try)
+                     (if (null? types-to-try)
+                       (fail)
+                       (let* ((type-to-try (car types-to-try))
+                              (rest (cdr types-to-try))
+                              (proc-for-type (get op (map (const type-to-try) type-tags))))
+                         (if (and (can-coerce-args-to type-to-try)
+                                  (not (all-args-of-type type-to-try))
+                                  proc-for-type)
+                           (apply proc-for-type
+                                  (coerce-args-to type-to-try))
+                           (coerce-iter rest)))))))
+          (coerce-iter type-tags))))))
 
 (define (proxy-to-type type op)
   (lambda args
