@@ -27,6 +27,13 @@
 (define (put op type val)
   (set! global-table (put-table op type val global-table)))
 
+(define global-coerion-table empty-table)
+(define (get-coercion from-type to-type)
+  (get-table from-type to-type global-coerion-table))
+(define (put-coercion from-type to-type coercion)
+  (set! global-coerion-table
+    (put-table from-type to-type coercion global-coerion-table)))
+
 (define (attach-tag type-tag contents)
   (if (or (and (string? contents)
                (equal? 'string type-tag))
@@ -55,10 +62,33 @@
     (let ((proc (get op type-tags)))
       (if proc
         (apply proc (map contents args))
-        (error
-          "No method for these types:
-          APPLY-GENERIC"
-          (list op type-tags))))))
+        (if (= (length args) 2)
+          (let ((type1 (car type-tags))
+                (type2 (cadr type-tags))
+                (a1 (car args))
+                (a2 (cadr args)))
+            (let ((t1->t2
+                    (get-coercion type1
+                                  type2))
+                  (t2->t1
+                    (get-coercion type2
+                                  type1)))
+              (cond (t1->t2
+                      (apply-generic
+                        op (t1->t2 a1) a2))
+                    (t2->t1
+                      (apply-generic
+                        op a1 (t2->t1 a2)))
+                    (else
+                      (error
+                        "No method for
+                        these types"
+                        (list
+                          op
+                          type-tags))))))
+            (error
+              "No method for these types"
+              (list op type-tags)))))))
 
 (define (proxy-to-type type op)
   (lambda args
