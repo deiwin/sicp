@@ -21,10 +21,10 @@
      '(complex-number complex-number complex-number)
      (lambda (x y z) (list x y z)))
 
-(define (coerce-to-complex x)
-  (attach-tag 'complex-number (contents x)))
-(put-coercion 'integer 'complex-number coerce-to-complex)
-(put-coercion 'rational-number 'complex-number coerce-to-complex)
+(put-coercion 'integer 'complex-number
+              (curry attach-tag 'complex-number))
+(put-coercion 'rational-number 'complex-number
+              (curry attach-tag 'complex-number))
 
 (assert "can coerce functions with more than 2 arguments"
         (equal? (list (attach-tag 'complex-number 1)

@@ -77,7 +77,7 @@
                             (let ((from-type (type-tag arg)))
                               (if (equal? to-type from-type)
                                 arg
-                                ((get-coercion from-type to-type) arg))))
+                                ((get-coercion from-type to-type) (contents arg)))))
                           args)))
                  (all-args-of-type
                    (lambda (ref-type)
