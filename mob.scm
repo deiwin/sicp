@@ -489,3 +489,24 @@
 
 (assert "applies repeatedly"
         (= 625 ((repeated square 2) 5)))
+
+(define (average . values)
+  (/ (foldl + 0 values) (length values)))
+
+(define (smooth f dx)
+  (lambda (x) (average (f x)
+                       (f (+ x dx))
+                       (f (- x dx)))))
+
+(assert "smoothing"
+        (and (= 5 ((smooth identity 0.1) 5))
+             (< 25 ((smooth square 0.1) 5))))
+
+(define (foldn-smooth f n dx)
+  (repeated (smooth f dx) n))
+
+(assert "repeated smoothing"
+        (and (= ((foldn-smooth identity 1 0.1) 5) ((smooth identity 0.1) 5))
+             (= ((foldn-smooth identity 2 0.1) 5) ((smooth identity 0.1) 5))
+             (> ((foldn-smooth square 2 0.1) 5) ((smooth square 0.1) 5))
+             (= ((foldn-smooth square 1 0.1) 5) ((smooth square 0.1) 5))))
