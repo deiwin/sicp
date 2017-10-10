@@ -469,17 +469,15 @@
 (assert "close to dat tan"
         (< (abs (- (tan 1.5) (tan-cf 1.5 100))) 0.0001))
 
-(define (double f)
-  (lambda (x)
-    (f (f x))))
-
-(assert "doubles procedure calls"
-        (and (= 5 ((double add1) 3))
-             (= 21 (((double (double double)) add1) 5))))
-
 (define (compose f g)
   (lambda (x)
     (f (g x))))
 
 (assert "composes functions"
         (= 49 ((compose square add1) 6)))
+
+(define (double f) (compose f f))
+
+(assert "doubles procedure calls"
+        (and (= 5 ((double add1) 3))
+             (= 21 (((double (double double)) add1) 5))))
