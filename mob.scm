@@ -476,3 +476,10 @@
 (assert "doubles procedure calls"
         (and (= 5 ((double add1) 3))
              (= 21 (((double (double double)) add1) 5))))
+
+(define (compose f g)
+  (lambda (x)
+    (f (g x))))
+
+(assert "composes functions"
+        (= 49 ((compose square add1) 6)))
