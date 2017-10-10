@@ -468,3 +468,11 @@
 
 (assert "close to dat tan"
         (< (abs (- (tan 1.5) (tan-cf 1.5 100))) 0.0001))
+
+(define (double f)
+  (lambda (x)
+    (f (f x))))
+
+(assert "doubles procedure calls"
+        (and (= 5 ((double add1) 3))
+             (= 21 (((double (double double)) add1) 5))))
