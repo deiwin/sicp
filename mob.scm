@@ -481,3 +481,11 @@
 (assert "doubles procedure calls"
         (and (= 5 ((double add1) 3))
              (= 21 (((double (double double)) add1) 5))))
+
+(define (repeated f n)
+  (if (= n 0)
+    identity
+    (compose f (repeated f (- n 1)))))
+
+(assert "applies repeatedly"
+        (= 625 ((repeated square 2) 5)))
