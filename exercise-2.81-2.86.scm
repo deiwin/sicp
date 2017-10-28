@@ -33,3 +33,20 @@
                 (complex-list (attach-tag 'integer 1)
                               (attach-tag 'rational-number 2)
                               (attach-tag 'complex-number 3))))
+
+(define (raise x)
+  (apply-generic 'raise x))
+(put 'raise '(integer)
+     (lambda (x) (attach-tag 'rational-number x)))
+(put 'raise '(rational-number)
+     (lambda (x) (attach-tag 'real-number x)))
+(put 'raise '(real-number)
+     (lambda (x) (attach-tag 'complex-number x)))
+
+(assert "raises numbers to higher level in type tower"
+        (and (equal? (attach-tag 'rational-number 1)
+                     (raise (attach-tag 'integer 1)))
+             (equal? (attach-tag 'real-number 2)
+                     (raise (attach-tag 'rational-number 2)))
+             (equal? (attach-tag 'complex-number 3)
+                     (raise (attach-tag 'real-number 3)))))
