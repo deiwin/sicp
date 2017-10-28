@@ -50,3 +50,45 @@
                      (raise (attach-tag 'rational-number 2)))
              (equal? (attach-tag 'complex-number 3)
                      (raise (attach-tag 'real-number 3)))))
+
+(define (apply-generic op . args)
+  (let* ((type-tags (map type-tag args))
+         (fail (lambda () (error
+                            "No method for these types"
+                            (list op type-tags)))))
+    (let ((proc (get op type-tags)))
+      (if proc
+        (apply proc (map contents args))
+        (letrec ((can-coerce-args-to
+                   (lambda (to-type)
+                     (andmap (lambda (from-type)
+                               (or (equal? from-type to-type)
+                                   (get-coercion from-type to-type)))
+                             type-tags)))
+                 (coerce-args-to
+                   (lambda (to-type)
+                     (map (lambda (arg)
+                            (let ((from-type (type-tag arg)))
+                              (if (equal? to-type from-type)
+                                arg
+                                ((get-coercion from-type to-type) (contents arg)))))
+                          args)))
+                 (all-args-of-type
+                   (lambda (ref-type)
+                     (andmap (lambda (type)
+                               (equal? ref-type type))
+                             type-tags)))
+                 (coerce-iter
+                   (lambda (types-to-try)
+                     (if (null? types-to-try)
+                       (fail)
+                       (let* ((type-to-try (car types-to-try))
+                              (rest (cdr types-to-try))
+                              (proc-for-type (get op (map (const type-to-try) type-tags))))
+                         (if (and (can-coerce-args-to type-to-try)
+                                  (not (all-args-of-type type-to-try))
+                                  proc-for-type)
+                           (apply proc-for-type
+                                  (coerce-args-to type-to-try))
+                           (coerce-iter rest)))))))
+          (coerce-iter type-tags))))))
