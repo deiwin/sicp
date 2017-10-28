@@ -1,6 +1,13 @@
 (load "testing.rkt")
 (load "generics.scm")
 
+(define (create-integer x)
+  (attach-tag 'integer x))
+(define (create-rational-number num denom)
+  (attach-tag 'rational-number (list num denom)))
+(define (create-complex-number real imaginary)
+  (attach-tag 'complex-number (list real imaginary)))
+
 (define (exp x y)
   (apply-generic 'exp x y))
 
@@ -37,19 +44,16 @@
 (define (raise x)
   (apply-generic 'raise x))
 (put 'raise '(integer)
-     (lambda (x) (attach-tag 'rational-number x)))
+     (lambda (x) (create-rational-number (create-integer x) (create-integer 1))))
 (put 'raise '(rational-number)
-     (lambda (x) (attach-tag 'real-number x)))
-(put 'raise '(real-number)
-     (lambda (x) (attach-tag 'complex-number x)))
+     (lambda (x) (create-complex-number (attach-tag 'rational-number x) (raise (create-integer 0)))))
 
 (assert "raises numbers to higher level in type tower"
-        (and (equal? (attach-tag 'rational-number 1)
-                     (raise (attach-tag 'integer 1)))
-             (equal? (attach-tag 'real-number 2)
-                     (raise (attach-tag 'rational-number 2)))
-             (equal? (attach-tag 'complex-number 3)
-                     (raise (attach-tag 'real-number 3)))))
+        (and (equal? (create-rational-number (create-integer 2) (create-integer 1))
+                     (raise (create-integer 2)))
+             (equal? (create-complex-number (create-rational-number (create-integer 3) (create-integer 1))
+                                            (create-rational-number (create-integer 0) (create-integer 1)))
+                     (raise (create-rational-number (create-integer 3) (create-integer 1))))))
 
 (define (apply-generic op . args)
   (let* ((type-tags (map type-tag args))
@@ -97,3 +101,20 @@
                 (complex-list (attach-tag 'integer 1)
                               (attach-tag 'rational-number 2)
                               (attach-tag 'complex-number 3))))
+
+(define (project x)
+  (apply-generic 'project x))
+(put 'project '(rational-number)
+     (lambda (x) (create-integer (round (/ (contents (car x))
+                                           (contents (cadr x)))))))
+(put 'project '(complex-number)
+     (lambda (x) (car x)))
+
+(assert "can project to lower types"
+        (and (equal? (create-integer 1)
+                     (project (create-rational-number (create-integer 1) (create-integer 1))))
+             (equal? (create-integer 2)
+                     (project (create-rational-number (create-integer 9) (create-integer 4))))
+             (equal? (create-rational-number (create-integer 1) (create-integer 2))
+                     (project (create-complex-number (create-rational-number (create-integer 1) (create-integer 2))
+                                                     (create-rational-number (create-integer 3) (create-integer 4)))))))
