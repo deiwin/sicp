@@ -118,3 +118,34 @@
              (equal? (create-rational-number (create-integer 1) (create-integer 2))
                      (project (create-complex-number (create-rational-number (create-integer 1) (create-integer 2))
                                                      (create-rational-number (create-integer 3) (create-integer 4)))))))
+
+(define (drop x)
+  (apply-generic 'drop x))
+(put 'drop '(integer)
+     (lambda (x) (attach-tag 'integer x))) ; can't be dropped any lower
+(put 'drop '(rational-number)
+     (lambda (x) (let ((projection (project (attach-tag 'rational-number x))))
+                   (if (equal? x (contents (raise projection)))
+                     (drop projection)
+                     (attach-tag 'rational-number x)))))
+(put 'drop '(complex-number)
+     (lambda (x) (let ((projection (project (attach-tag 'complex-number x))))
+                   (if (equal? x (contents (raise projection)))
+                     (drop projection)
+                     (attach-tag 'complex-number x)))))
+
+(assert "drops to lower types if possible"
+        (and (equal? (create-integer 2)
+                     (drop (create-rational-number (create-integer 2) (create-integer 1))))
+             (let ((undroppable-rat (create-rational-number (create-integer 3) (create-integer 2))))
+               (equal? undroppable-rat
+                       (drop undroppable-rat)))
+             (let ((real-part (create-rational-number (create-integer 3) (create-integer 2))))
+               (and (equal? real-part
+                            (drop (create-complex-number real-part
+                                                         (raise (create-integer 0)))))
+                    (let ((undroppable-cplx (create-complex-number real-part (raise (create-integer 1)))))
+                      (equal? undroppable-cplx
+                              (drop undroppable-cplx)))))
+             (equal? (create-integer 3)
+                     (drop (raise (raise (create-integer 3)))))))
