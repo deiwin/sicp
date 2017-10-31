@@ -132,3 +132,11 @@
         (and (= 4 (to-int (church-expt two two)))
              (= 8 (to-int (church-expt two three)))
              (= 9 (to-int (church-expt three two)))))
+
+(define (last-pair list)
+  (if (null? (cdr list))
+      list
+      (last-pair (cdr list))))
+
+(assert "last-pair"
+        (equal? '(34) (last-pair '(23 72 149 34))))
