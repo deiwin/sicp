@@ -91,3 +91,20 @@
         (let ((pair (my-cons 3 5)))
           (and (= 3 (my-car pair))
                (= 5 (my-cdr pair)))))
+
+(define zero (lambda (f) (lambda (x) x)))
+
+(define (add-1 n)
+  (lambda (f) (lambda (x) (f ((n f) x)))))
+
+(define one (lambda (f) (lambda (x) (f x))))
+(define two (lambda (f) (lambda (x) (f (f x)))))
+
+(define (to-int f)
+  ((f (lambda (n) (+ n 1))) 0))
+
+(assert "add one to zero"
+        (and (= 1 (to-int (add-1 zero)))
+             (= 1 (to-int one))
+             (= 2 (to-int (add-1 one)))
+             (= 2 (to-int two))))
