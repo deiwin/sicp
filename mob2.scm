@@ -1,0 +1,32 @@
+(load "testing.rkt")
+
+(define (make-segment start end) (cons start end))
+(define (start-segment segment) (car segment))
+(define (end-segment segment) (cdr segment))
+
+(define (make-point x y) (cons x y))
+(define (x-point point) (car point))
+(define (y-point point) (cdr point))
+
+(define (average a b) (/ (+ a b) 2))
+(define (midpoint-segment segment)
+  (let ((start-x (x-point (start-segment segment)))
+        (end-x (x-point (end-segment segment)))
+        (start-y (y-point (start-segment segment)))
+        (end-y (y-point (end-segment segment))))
+    (make-point (average start-x end-x)
+                (average start-y end-y))))
+
+(assert "can get the midpoint of a segment"
+        (and (equal? (make-point 1 2)
+                     (midpoint-segment (make-segment (make-point 0 0)
+                                                     (make-point 2 4))))
+             (equal? (make-point 0 0)
+                     (midpoint-segment (make-segment (make-point -1 -1)
+                                                     (make-point 1 1))))
+             (equal? (make-point -2 -2)
+                     (midpoint-segment (make-segment (make-point -3 -3)
+                                                     (make-point -1 -1))))
+             (equal? (make-point 1 1)
+                     (midpoint-segment (make-segment (make-point 2 2)
+                                                     (make-point 0 0))))))
