@@ -152,3 +152,10 @@
 
 (assert "square-list"
         (equal? (square-list '(1 2 3 4)) '(1 4 9 16)))
+
+(define (for-each f l)
+  (if (null? l)
+    #t
+    (begin
+      (f (car l))
+      (for-each f (cdr l)))))
