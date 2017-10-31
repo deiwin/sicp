@@ -112,7 +112,23 @@
 
 (define (add a b)
   (lambda (f) (lambda (x) ((a f) ((b f) x)))))
+(define (add a b)
+  ((a add-1) b))
 
 (assert "addition"
         (and (= 4 (to-int (add two two)))
              (= 5 (to-int (add two three)))))
+
+(define (mul a b) (compose a b))
+
+(assert "multiplication"
+        (and (= 4 (to-int (mul two two)))
+             (= 6 (to-int (mul two three)))
+             (= 6 (to-int (mul three two)))))
+
+(define (church-expt w z) (z w))
+
+(assert "exponentiation"
+        (and (= 4 (to-int (church-expt two two)))
+             (= 8 (to-int (church-expt two three)))
+             (= 9 (to-int (church-expt three two)))))
