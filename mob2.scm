@@ -46,12 +46,10 @@
              (= (sqrt 2) (segment-length (make-segment (make-point 0 0)
                                                        (make-point 1 1))))))
 
-(define (make-rectangle top-left bottom-left bottom-right)
-  (list top-left bottom-left bottom-right))
-(define (rectangle-left-side r)
-  (make-segment (cadr r) (car r)))
-(define (rectangle-bottom-side r)
-  (make-segment (cadr r) (caddr r)))
+(define (make-rectangle left-side bottom-side)
+  (list left-side bottom-side))
+(define (rectangle-left-side r) (car r))
+(define (rectangle-bottom-side r) (cadr r))
 
 (define (rectangle-height r)
   (segment-length (rectangle-left-side r)))
@@ -66,11 +64,13 @@
           (rectangle-height r))))
 
 (assert "can calc rectangle area"
-        (= 50 (rectangle-area (make-rectangle (make-point 0 5)
-                                              (make-point 0 0)
-                                              (make-point 10 0)))))
+        (= 50 (rectangle-area (make-rectangle (make-segment (make-point 0 5)
+                                                            (make-point 0 0))
+                                              (make-segment (make-point 0 0)
+                                                            (make-point 10 0))))))
 
 (assert "can calc rectangle perimeter"
-        (= 30 (rectangle-perimeter (make-rectangle (make-point 0 5)
-                                                   (make-point 0 0)
-                                                   (make-point 10 0)))))
+        (= 30 (rectangle-perimeter (make-rectangle (make-segment (make-point 0 5)
+                                                                 (make-point 0 0))
+                                                   (make-segment (make-point 0 0)
+                                                                 (make-point 10 0))))))
