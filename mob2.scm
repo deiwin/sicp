@@ -74,3 +74,20 @@
                                                                  (make-point 0 0))
                                                    (make-segment (make-point 0 0)
                                                                  (make-point 10 0))))))
+
+(define (my-cons a b)
+  (* (expt 2 a)
+     (expt 3 b)))
+(define (my-car p)
+  (if (not (= 0 (remainder p 2)))
+      0
+      (+ 1 (my-car (/ p 2)))))
+(define (my-cdr p)
+  (if (not (= 0 (remainder p 3)))
+      0
+      (+ 1 (my-cdr (/ p 3)))))
+
+(assert "can store pairs of numbers in integers"
+        (let ((pair (my-cons 3 5)))
+          (and (= 3 (my-car pair))
+               (= 5 (my-cdr pair)))))
