@@ -99,6 +99,7 @@
 
 (define one (lambda (f) (lambda (x) (f x))))
 (define two (lambda (f) (lambda (x) (f (f x)))))
+(define three (lambda (f) (lambda (x) (f (f (f x))))))
 
 (define (to-int f)
   ((f (lambda (n) (+ n 1))) 0))
@@ -108,3 +109,10 @@
              (= 1 (to-int one))
              (= 2 (to-int (add-1 one)))
              (= 2 (to-int two))))
+
+(define (add a b)
+  (lambda (f) (lambda (x) ((a f) ((b f) x)))))
+
+(assert "addition"
+        (and (= 4 (to-int (add two two)))
+             (= 5 (to-int (add two three)))))
