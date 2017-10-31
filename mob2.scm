@@ -140,3 +140,15 @@
 
 (assert "last-pair"
         (equal? '(34) (last-pair '(23 72 149 34))))
+
+
+(define (square-list items)
+  (if (null? items)
+      '()
+      (cons (square (car items)) (square-list (cdr items)))))
+
+(define (square-list items)
+  (map square items))
+
+(assert "square-list"
+        (equal? (square-list '(1 2 3 4)) '(1 4 9 16)))
