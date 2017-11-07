@@ -281,3 +281,13 @@
 
 (assert
   (equal? '(1 (4 (9 9 16) 25) (36 49)) (square-tree '(1 (2 (3 3 4) 5) (6 7)))))
+
+(define (subsets s)
+  (if (null? s)
+      '(())
+      (let ((rest (subsets (cdr s))))
+        (append rest (map (lambda (subset) (cons (car s) subset))
+                          rest)))))
+
+(assert (equal? '(() (3) (2) (2 3) (1) (1 3) (1 2) (1 2 3))
+                (subsets '(1 2 3))))
