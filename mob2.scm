@@ -164,3 +164,10 @@
   (and (= 7 (car (cdaddr '(1 3 (5 7) 9))))
        (= 7 (caar '((7))))
        (= 7 (cadadr (cadadr (cadadr '(1 (2 (3 (4 (5 (6 7))))))))))))
+
+(assert
+  (let ((x (list 1 2 3))
+        (y (list 4 5 6)))
+    (and (equal? '(1 2 3 4 5 6) (append x y))
+         (equal? '((1 2 3) 4 5 6) (cons x y))
+         (equal? '((1 2 3) (4 5 6)) (list x y)))))
