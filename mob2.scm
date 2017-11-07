@@ -195,3 +195,18 @@
        (and
             (equal? '((3 4) (1 2)) (reverse x))
             (equal? '((4 3) (2 1)) (deep-reverse x)))))
+
+(define (fringe tree)
+  (cond ((null? tree) '())
+        ((pair? (car tree)) (append (fringe (car tree)) (fringe (cdr tree))))
+        (else (cons (car tree) (fringe (cdr tree))))))
+
+(define (fringe tree)
+  (cond ((null? tree) '())
+        ((not (pair? tree)) (list tree))
+        (else (append (fringe (car tree)) (fringe (cdr tree))))))
+
+(assert "fringe"
+        (let ((x '((1 2) (3 4))))
+          (and (equal? '(1 2 3 4) (fringe x))
+               (equal? '(1 2 3 4 1 2 3 4) (fringe (list x x))))))
