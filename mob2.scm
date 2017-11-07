@@ -210,3 +210,51 @@
         (let ((x '((1 2) (3 4))))
           (and (equal? '(1 2 3 4) (fringe x))
                (equal? '(1 2 3 4 1 2 3 4) (fringe (list x x))))))
+
+(define (make-mobile left right)
+  (list left right))
+(define mobile? pair?)
+(define left-branch car)
+(define right-branch cadr)
+
+(define (make-branch length structure)
+  (list length structure))
+(define branch-length car)
+(define branch-structure cadr)
+
+(define (branch-weight branch)
+  (let ((structure (branch-structure branch)))
+       (if (mobile? structure)
+           (total-weight structure)
+           structure)))
+
+(define (total-weight mobile)
+  (+ (branch-weight (left-branch mobile))
+     (branch-weight (right-branch mobile))))
+
+(define (mobile-balanced? mobile)
+  (define (torque branch)
+    (* (branch-length branch)
+       (branch-weight branch)))
+  (define (branch-balanced? branch)
+    (let ((structure (branch-structure branch)))
+         (if (mobile? structure)
+             (mobile-balanced? structure)
+             #t)))
+  (and (= (torque (left-branch mobile))
+          (torque (right-branch mobile)))
+       (branch-balanced? (left-branch mobile))
+       (branch-balanced? (right-branch mobile))))
+
+(assert
+  (and (= 10 (total-weight (make-mobile (make-branch 5 5)
+                                        (make-branch 5 (make-mobile (make-branch 2 2)
+                                                                    (make-branch 3 3))))))))
+
+(assert
+ (and (mobile-balanced? (make-mobile (make-branch 5 6)
+                                     (make-branch 5 (make-mobile (make-branch 3 3)
+                                                                 (make-branch 3 3)))))
+      (not (mobile-balanced? (make-mobile (make-branch 5 6)
+                                          (make-branch 5 (make-mobile (make-branch 2 2)
+                                                                      (make-branch 3 3))))))))
