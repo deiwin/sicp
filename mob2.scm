@@ -171,3 +171,27 @@
     (and (equal? '(1 2 3 4 5 6) (append x y))
          (equal? '((1 2 3) 4 5 6) (cons x y))
          (equal? '((1 2 3) (4 5 6)) (list x y)))))
+
+(define (reverse l)
+  (define (iter acc rest)
+    (if (null? rest)
+      acc
+      (iter (cons (car rest) acc) (cdr rest))))
+  (iter '() l))
+
+(define (deep-reverse l)
+  (define (iter acc rest)
+    (if (null? rest)
+      acc
+      (let* ((head (car rest))
+             (reversed-head (if (pair? head)
+                              (deep-reverse head)
+                              head)))
+        (iter (cons reversed-head acc) (cdr rest)))))
+  (iter '() l))
+
+(assert
+  (let ((x '((1 2) (3 4))))
+       (and
+            (equal? '((3 4) (1 2)) (reverse x))
+            (equal? '((4 3) (2 1)) (deep-reverse x)))))
