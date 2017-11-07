@@ -212,15 +212,15 @@
                (equal? '(1 2 3 4 1 2 3 4) (fringe (list x x))))))
 
 (define (make-mobile left right)
-  (list left right))
+  (cons left right))
 (define mobile? pair?)
 (define left-branch car)
-(define right-branch cadr)
+(define right-branch cdr)
 
 (define (make-branch length structure)
-  (list length structure))
+  (cons length structure))
 (define branch-length car)
-(define branch-structure cadr)
+(define branch-structure cdr)
 
 (define (branch-weight branch)
   (let ((structure (branch-structure branch)))
