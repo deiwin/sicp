@@ -258,3 +258,26 @@
       (not (mobile-balanced? (make-mobile (make-branch 5 6)
                                           (make-branch 5 (make-mobile (make-branch 2 2)
                                                                       (make-branch 3 3))))))))
+
+(define (tree-map fn tree)
+  (cond ((null? tree) '())
+        ((not (pair? tree)) (fn tree))
+        (else (cons (tree-map fn (car tree))
+                    (tree-map fn (cdr tree))))))
+
+(define (tree-map fn tree)
+  (if (null? tree)
+    '()
+    (let* ((head (car tree))
+           (tail (cdr tree))
+           (mapped-head (if (pair? head)
+                          (tree-map fn head)
+                          (fn head))))
+      (cons mapped-head (tree-map fn tail)))))
+
+
+(define (square-tree tree)
+  (tree-map square tree))
+
+(assert
+  (equal? '(1 (4 (9 9 16) 25) (36 49)) (square-tree '(1 (2 (3 3 4) 5) (6 7)))))
