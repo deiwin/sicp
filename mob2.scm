@@ -376,3 +376,29 @@
   (and
     (equal? '((3 4) (1 2)) (reverse-1 '((1 2) (3 4))))
     (equal? '((3 4) (1 2)) (reverse-2 '((1 2) (3 4))))))
+
+(define (enumerate-interval low high)
+  (if (> low high)
+      '()
+      (cons low
+            (enumerate-interval
+             (+ low 1)
+             high))))
+
+(define (flatmap proc seq)
+  (accumulate append '() (map proc seq)))
+
+(define (triples n s)
+  (filter (lambda (l)
+                  (= (foldl + 0 l) s))
+          (flatmap (lambda (k)
+                           (flatmap (lambda (j)
+                                            (map (lambda (i)
+                                                         (list i j k))
+                                                 (enumerate-interval 1 (- j 1))))
+                                (enumerate-interval 2 (- k 1))))
+                   (enumerate-interval 3 n))))
+
+(assert (and (equal? '((1 2 3)) (triples 3 6))
+             (equal? '((1 3 4)) (triples 4 8))
+             (equal? '((1 3 4) (1 2 5)) (triples 5 8))))
