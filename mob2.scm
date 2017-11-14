@@ -317,3 +317,15 @@
    coefficient-sequence))
 
 (assert (= 79 (horner-eval 2 '(1 3 0 5 0 1))))
+
+(define (count-leaves x)
+  (cond ((null? x) 0)
+        ((not (pair? x)) 1)
+        (else (+ (count-leaves (car x))
+                 (count-leaves (cdr x))))))
+
+(define (count-leaves-2 t)
+  (accumulate + 0 (map (lambda (x) (if (pair? x) (count-leaves-2 x) 1)) t)))
+
+(assert (and (= (count-leaves '()) (count-leaves-2 '()))
+             (= (count-leaves '(1 2 (3 4))) (count-leaves-2 '(1 2 (3 4))))))
