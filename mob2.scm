@@ -291,3 +291,18 @@
 
 (assert (equal? '(() (3) (2) (2 3) (1) (1 3) (1 2) (1 2 3))
                 (subsets '(1 2 3))))
+
+(define accumulate foldr)
+(define (my-map p sequence)
+  (accumulate (lambda (x acc) (cons (p x) acc))
+              '() sequence))
+(assert (equal? '(2 3 4) (my-map add1 '(1 2 3))))
+
+(define (my-append seq1 seq2)
+  (accumulate cons seq2 seq1))
+(assert (equal? '(1 2 3 4 5 6) (my-append '(1 2 3) '(4 5 6))))
+
+(define (my-length sequence)
+  (accumulate (lambda (x acc) (add1 acc))
+              0 sequence))
+(assert (= 4 (my-length '(1 2 3 4))))
