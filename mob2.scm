@@ -337,3 +337,29 @@
             (accumulate-n op init (map cdr seqs)))))
 
 (assert (equal? '(22 26 30) (accumulate-n + 0 '((1 2 3) (4 5 6) (7 8 9) (10 11 12)))))
+
+(define (matrix-*-vector m v)
+  (map (lambda (row)
+         (accumulate + 0 (map * row v)))
+       m))
+(assert (equal? '(50 122) (matrix-*-vector '((1 2 3) (4 5 6)) '(7 8 9))))
+
+(define (transpose mat)
+  (accumulate-n cons '() mat))
+(assert (equal? '((1 2 3)
+                  (4 5 6))
+                (transpose '((1 4)
+                             (2 5)
+                             (3 6)))))
+
+(define (matrix-*-matrix m n)
+  (let ((cols (transpose n)))
+    (map (lambda (row) (matrix-*-vector cols row)) m)))
+
+(assert (equal? (matrix-*-matrix '((1 2 3)
+                                   (4 5 6))
+                                 '((1 4)
+                                   (2 5)
+                                   (3 6)))
+                '((14 32)
+                  (32 77))))
