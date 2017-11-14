@@ -363,3 +363,16 @@
                                    (3 6)))
                 '((14 32)
                   (32 77))))
+
+(define (reverse-1 sequence)
+  (foldr
+    (lambda (x acc) (append acc (list x))) '() sequence))
+
+(define (reverse-2 sequence)
+  (foldl
+    (lambda (x acc) (cons x acc)) '() sequence))
+
+(assert
+  (and
+    (equal? '((3 4) (1 2)) (reverse-1 '((1 2) (3 4))))
+    (equal? '((3 4) (1 2)) (reverse-2 '((1 2) (3 4))))))
