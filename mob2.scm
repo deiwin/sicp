@@ -426,3 +426,5 @@
              (not (equalq? '(a b) '(a b c)))
              (equalq? 'a 'a)
              (not (equalq? 'a 'b))))
+
+(car ''abracadabra)
