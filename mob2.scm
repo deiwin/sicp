@@ -425,7 +425,8 @@
              (equalq? '(a b c) '(a b c))
              (not (equalq? '(a b) '(a b c)))
              (equalq? 'a 'a)
-             (not (equalq? 'a 'b))))
+             (not (equalq? 'a 'b))
+             (equalq? '(+ (+ a b)) '(+ (+ a b)))))
 
 (car ''abracadabra)
 
@@ -457,11 +458,17 @@
   (and (pair? x) (eq? (car x) '+)))
 
 (define (addend s) (cadr s))
-(define (augend s) (caddr s))
+(define (augend s)
+  (if (null? (cdddr s))
+    (caddr s)
+    (cons '+ (cddr s))))
 (define (product? x)
   (and (pair? x) (eq? (car x) '*)))
 (define (multiplier p) (cadr p))
-(define (multiplicand p) (caddr p))
+(define (multiplicand p)
+  (if (null? (cdddr p))
+    (caddr p)
+    (cons '* (cddr p))))
 
 (define (deriv exp var)
   (cond ((number? exp) 0)
@@ -503,4 +510,5 @@
 (assert (and (equal? '(+ (* x y) (* y (+ x 3))) (deriv '(* (* x y) (+ x 3)) 'x))
              (equal? '(* 2 x) (deriv '(** x 2) 'x))
              (equal? 2 (deriv (deriv '(** x 2) 'x) 'x))
-             (equal? 1 (deriv '(** x 1) 'x))))
+             (equal? 1 (deriv '(** x 1) 'x))
+             (equal? '(+ (* x y) (* y (+ x 3))) (deriv '(* x y (+ x 3)) 'x))))
