@@ -411,3 +411,18 @@
              (equal? #f (pair? (car '(a short list))))
              (equal? #f (memq 'red '((red shoes) (blue socks))))
              (equal? '(red shoes blue socks) (memq 'red '(red shoes blue socks)))))
+
+(define (equalq? x y)
+  (cond ((and (symbol? x) (symbol? y))
+         (eq? x y))
+        ((and (pair? x) (pair? y))
+         (and (equalq? (car x) (car y))
+              (equalq? (cdr x) (cdr y))))
+        ((and (null? x) (null? y) #t))
+        (else #f)))
+
+(assert (and (equalq? '() '())
+             (equalq? '(a b c) '(a b c))
+             (not (equalq? '(a b) '(a b c)))
+             (equalq? 'a 'a)
+             (not (equalq? 'a 'b))))
