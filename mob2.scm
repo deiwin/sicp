@@ -439,12 +439,16 @@
        (eq? v1 v2)))
 (define (=number? exp num)
   (and (number? exp) (= exp num)))
+
 (define (make-sum a1 a2)
   (cond ((=number? a1 0) a2)
         ((=number? a2 0) a1)
+        ((same-variable? a1 a2)
+         (make-product 2 a2))
         ((and (number? a1) (number? a2))
          (+ a1 a2))
         (else (list a1 '+ a2))))
+
 (define (make-product m1 m2)
   (cond ((or (=number? m1 0)
              (=number? m2 0))
@@ -454,19 +458,36 @@
         ((and (number? m1) (number? m2))
          (* m1 m2))
         (else (list m1 '* m2))))
+
+
+(define (elem-if-singleton xs)
+  (if (and (pair? xs)
+           (null? (cdr xs)))
+      (car xs)
+      xs))
+
+(define (before-sym exp sym)
+  (elem-if-singleton
+    (takef exp (lambda (x)
+                 (not (eq? sym x))))))
+(define (after-sym exp sym)
+  (elem-if-singleton
+    (cdr (memq sym exp))))
+
 (define (sum? x)
   (and (pair? x)
-       (pair? (cdr x))
-       (eq? (cadr x) '+)))
-
-(define (addend s) (car s))
-(define (augend s) (caddr s))
+       (memq '+ x)))
+(define (addend s)
+  (before-sym s '+))
+(define (augend s)
+  (after-sym s '+))
 (define (product? x)
   (and (pair? x)
-       (pair? (cdr x))
-       (eq? (cadr x) '*)))
-(define (multiplier p) (car p))
-(define (multiplicand p) (caddr p))
+       (memq '* x)))
+(define (multiplier p)
+  (before-sym p '*))
+(define (multiplicand p)
+  (after-sym p '*))
 
 (define (deriv exp var)
   (cond ((number? exp) 0)
@@ -506,4 +527,7 @@
   (eq? '** (cadr e)))
 
 (assert (and (equal? 4 (deriv '(x + (3 * (x + (y + 2)))) 'x))
-             (equal? '(2 * x) (deriv '(x ** 2) 'x))))
+             (equal? '(2 * x) (deriv '(x ** 2) 'x))
+             (equal? 4 (deriv '(x + 3 * x) 'x))
+             (equal? 4 (deriv '(3 * x + x) 'x))
+             (equal? '(3 * (2 * x)) (deriv '(3 * x * x) 'x))))
