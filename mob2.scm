@@ -530,4 +530,5 @@
              (equal? '(2 * x) (deriv '(x ** 2) 'x))
              (equal? 4 (deriv '(x + 3 * x) 'x))
              (equal? 4 (deriv '(3 * x + x) 'x))
-             (equal? '(3 * (2 * x)) (deriv '(3 * x * x) 'x))))
+             (equal? '(3 * (2 * x)) (deriv '(3 * x * x) 'x))
+             (equal? '(3 * (2 * x)) (deriv '(3 * x ** 2) 'x))))
