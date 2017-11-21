@@ -402,3 +402,12 @@
 (assert (and (equal? '((1 2 3)) (triples 3 6))
              (equal? '((1 3 4)) (triples 4 8))
              (equal? '((1 3 4) (1 2 5)) (triples 5 8))))
+
+(assert "intuition"
+        (and (equal? '(a b c) (list 'a 'b 'c))
+             (equal? '((george)) (list (list 'george)))
+             (equal? '((y1 y2)) (cdr '((x1 x2) (y1 y2))))
+             (equal? '(y1 y2) (cadr '((x1 x2) (y1 y2))))
+             (equal? #f (pair? (car '(a short list))))
+             (equal? #f (memq 'red '((red shoes) (blue socks))))
+             (equal? '(red shoes blue socks) (memq 'red '(red shoes blue socks)))))
