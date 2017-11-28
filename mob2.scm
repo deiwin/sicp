@@ -538,6 +538,7 @@
 (define (right-branch tree) (caddr tree))
 (define (make-tree entry left right)
   (list entry left right))
+(define empty-tree? null?)
 
 (define (element-of-set? x set)
   (cond ((null? set) false)
@@ -640,3 +641,24 @@
              (equal? '(1 2 3) (tree->list (union-set (list->tree '(1 2)) (list->tree '(3)))))
              (equal? '() (tree->list (union-set (list->tree '()) (list->tree '()))))
              (equal? '(1 2 3) (tree->list (union-set (list->tree '(1 3)) (list->tree '(1 2)))))))
+
+(define make-record cons)
+
+(define key car)
+
+(define value cdr)
+
+(define (lookup given-key set-of-records)
+  (cond ((null? set-of-records) #f)
+        ((= given-key (key (entry set-of-records))) (entry set-of-records))
+        ((< given-key (key (entry set-of-records))) (lookup given-key (left-branch set-of-records)))
+        ((> given-key (key (entry set-of-records))) (lookup given-key (right-branch set-of-records)))
+        (else (error "Oh shit"))))
+
+(assert (and (equal? #f (lookup 42 (list->tree '())))
+             (let ((tony (make-record 42 "Tony"))
+                   (ostap (make-record 22 "Ostap"))
+                   (urmas (make-record 66 "Urmas")))
+               (and (equal? tony (lookup (key tony) (list->tree (list tony))))
+                    (equal? ostap (lookup (key ostap) (list->tree (list ostap tony urmas))))
+                    (equal? urmas (lookup (key urmas) (list->tree (list ostap tony urmas))))))))
