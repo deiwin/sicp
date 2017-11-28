@@ -533,38 +533,110 @@
              (equal? '(3 * (2 * x)) (deriv '(3 * x * x) 'x))
              (equal? '(3 * (2 * x)) (deriv '(3 * x ** 2) 'x))))
 
+(define (entry tree) (car tree))
+(define (left-branch tree) (cadr tree))
+(define (right-branch tree) (caddr tree))
+(define (make-tree entry left right)
+  (list entry left right))
+
 (define (element-of-set? x set)
-  (cond ((null? set) #f)
-        ((= x (car set)) #t)
-        ((< x (car set)) #f)
-        (else (element-of-set? x (cdr set)))))
+  (cond ((null? set) false)
+        ((= x (entry set)) true)
+        ((< x (entry set))
+         (element-of-set?
+          x
+          (left-branch set)))
+        ((> x (entry set))
+         (element-of-set?
+          x
+          (right-branch set)))))
+
 (define (adjoin-set x set)
-  (cond ((null? set) (list x))
-        ((< x (car set)) (cons x set))
-        ((= x (car set)) set)
-        (else (cons (car set) (adjoin-set x (cdr set))))))
-(define (intersection-set set1 set2)
-  (if (or (null? set1) (null? set2))
+  (cond ((null? set) (make-tree x '() '()))
+        ((= x (entry set)) set)
+        ((< x (entry set))
+         (make-tree
+          (entry set)
+          (adjoin-set x (left-branch set))
+          (right-branch set)))
+        ((> x (entry set))
+         (make-tree
+          (entry set)
+          (left-branch set)
+          (adjoin-set x (right-branch set))))))
+
+(define (tree->list tree)
+  (define (copy-to-list tree result-list)
+    (if (null? tree)
+        result-list
+        (copy-to-list
+         (left-branch tree)
+         (cons (entry tree)
+               (copy-to-list
+                (right-branch tree)
+                result-list)))))
+  (copy-to-list tree '()))
+
+(define (list->tree elements)
+  (car (partial-tree
+         elements (length elements))))
+
+(define (partial-tree elts n)
+  (if (= n 0)
+    (cons '() elts)
+    (let ((left-size
+            (quotient (- n 1) 2)))
+      (let ((left-result
+              (partial-tree
+                elts left-size)))
+        (let ((left-tree
+                (car left-result))
+              (non-left-elts
+                (cdr left-result))
+              (right-size
+                (- n (+ left-size 1))))
+          (let ((this-entry
+                  (car non-left-elts))
+                (right-result
+                  (partial-tree
+                    (cdr non-left-elts)
+                    right-size)))
+            (let ((right-tree
+                    (car right-result))
+                  (remaining-elts
+                    (cdr right-result)))
+              (cons (make-tree this-entry
+                               left-tree
+                               right-tree)
+                    remaining-elts))))))))
+
+(define (intersection-set tree1 tree2)
+  (define (intersection-set-inter set1 set2)
+    (if (or (null? set1) (null? set2))
       '()
       (let ((x1 (car set1)) (x2 (car set2)))
         (cond ((= x1 x2)
-               (cons x1 (intersection-set
-                         (cdr set1)
-                         (cdr set2))))
-              ((< x1 x2) (intersection-set
+               (cons x1 (intersection-set-inter
                           (cdr set1)
-                          set2))
-              ((< x2 x1) (intersection-set
-                          set1
-                          (cdr set2)))))))
-(define (union-set set1 set2)
-  (cond ((null? set1) set2)
-        ((null? set2) set1)
-        ((< (car set1) (car set2)) (cons (car set1) (union-set (cdr set1) set2)))
-        ((= (car set1) (car set2)) (cons (car set1) (union-set (cdr set1) (cdr set2))))
-        (else (cons (car set2) (union-set set1 (cdr set2))))))
+                          (cdr set2))))
+              ((< x1 x2) (intersection-set-inter
+                           (cdr set1)
+                           set2))
+              ((< x2 x1) (intersection-set-inter
+                           set1
+                           (cdr set2)))))))
+  (list->tree (intersection-set-inter (tree->list tree1) (tree->list tree2))))
 
-(assert (and (equal? '(2) (intersection-set '(1 2) '(2 3)))
-             (equal? '(1 2 3) (union-set '(1 2) '(3)))
-             (equal? '() (union-set '() '()))
-             (equal? '(1 2 3) (union-set '(1 3) '(1 2)))))
+(define (union-set tree1 tree2)
+  (define (union-set-inter set1 set2)
+    (cond ((null? set1) set2)
+          ((null? set2) set1)
+          ((< (car set1) (car set2)) (cons (car set1) (union-set-inter (cdr set1) set2)))
+          ((= (car set1) (car set2)) (cons (car set1) (union-set-inter (cdr set1) (cdr set2))))
+          (else (cons (car set2) (union-set-inter set1 (cdr set2))))))
+  (list->tree (union-set-inter (tree->list tree1) (tree->list tree2))))
+
+(assert (and (equal? '(2) (tree->list (intersection-set (list->tree '(1 2)) (list->tree '(2 3)))))
+             (equal? '(1 2 3) (tree->list (union-set (list->tree '(1 2)) (list->tree '(3)))))
+             (equal? '() (tree->list (union-set (list->tree '()) (list->tree '()))))
+             (equal? '(1 2 3) (tree->list (union-set (list->tree '(1 3)) (list->tree '(1 2)))))))
