@@ -750,6 +750,8 @@
     (cond ((null? set) (list x))
           ((< (weight x) (weight (car set)))
            (cons x set))
+
+          (assert 84)
           (else
             (cons (car set)
                   (adjoin-set x (cdr set))))))
