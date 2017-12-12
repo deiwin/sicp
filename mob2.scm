@@ -670,6 +670,11 @@
 (define (symbol-leaf x) (cadr x))
 (define (weight-leaf x) (caddr x))
 
+(define (symbols tree)
+  (if (leaf? tree)
+      (list (symbol-leaf tree))
+      (symbols-branch tree)))
+
 (define (make-code-tree left right)
   (list left
         right
@@ -681,11 +686,6 @@
 (define (right-branch tree) (cadr tree))
 (define (symbols-branch tree) (caddr tree))
 (define (weight-branch tree) (cadddr tree))
-
-(define (symbols tree)
-  (if (leaf? tree)
-      (list (symbol-leaf tree))
-      (symbols-branch tree)))
 
 (define (weight tree)
   (if (leaf? tree)
@@ -714,13 +714,33 @@
   (decode-1 bits tree))
 
 
+(define sample-tree
+  (make-code-tree
+   (make-leaf 'A 4)
+   (make-code-tree
+    (make-leaf 'B 2)
+    (make-code-tree
+     (make-leaf 'D 1)
+     (make-leaf 'C 1)))))
+
+(define sample-message '(0 1 1 0 0 1 0 1 0 1 1 1 0))
+
 (assert "can decode"
-        (let ((sample-tree (make-code-tree
-                             (make-leaf 'A 4)
-                             (make-code-tree
-                               (make-leaf 'B 2)
-                               (make-code-tree
-                                 (make-leaf 'D 1)
-                                 (make-leaf 'C 1)))))
-              (sample-message '(0 1 1 0 0 1 0 1 0 1 1 1 0)))
-          (equal? '(A D A B B C A) (decode sample-message sample-tree))))
+        (equal? '(A D A B B C A) (decode sample-message sample-tree)))
+
+(define (encode message tree)
+  (define (encode-symbol sym tree)
+    (cond ((leaf? tree) '())
+          ((memq sym (symbols (left-branch tree))) (cons 0 (encode-symbol sym (left-branch tree))))
+          ((memq sym (symbols (right-branch tree))) (cons 1 (encode-symbol sym (right-branch tree))))
+          (else (error "oops"))))
+
+  (if (null? message)
+    '()
+    (append
+      (encode-symbol (car message)
+                     tree)
+      (encode (cdr message) tree))))
+
+(assert "encodes message"
+        (equal? sample-message (encode '(A D A B B C A) sample-tree)))
