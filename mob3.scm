@@ -100,3 +100,71 @@
              (equal? '(* 2 x) (deriv '(** x 2) 'x))
              (equal? 2 (deriv (deriv '(** x 2) 'x) 'x))
              (equal? 1 (deriv '(** x 1) 'x))))
+
+(define (apply-generic op . args)
+  (let ((type-tags (map type-tag args)))
+    (let ((proc (get op type-tags)))
+      (if proc
+          (apply proc (map contents args))
+          (error
+            "No method for these types:
+             APPLY-GENERIC"
+            (list op type-tags))))))
+
+(define (attach-tag type-tag contents)
+  (cons type-tag contents))
+
+(define (type-tag datum)
+  (if (pair? datum)
+      (car datum)
+      (error "Bad tagged datum:
+              TYPE-TAG" datum)))
+
+(define (contents datum)
+  (if (pair? datum)
+      (cdr datum)
+      (error "Bad tagged datum:
+              CONTENTS" datum)))
+
+(define (get-record name file)
+  (apply-generic 'get-record (attach-tag 'string name) file))
+(define (get-salary record)
+  (apply-generic 'get-salary record))
+
+(define (make-division-a-file records)
+  ((get 'make-division-a-file 'division-a-file) records))
+
+(define (make-division-a-record name salary address)
+  ((get 'make-division-a-record 'division-a-record) name salary address))
+
+(define (install-division-a)
+  (define (make-file records) records)
+  (define (make-record name salary address) (list name salary address))
+  (define record-name car)
+  (define record-salary cadr)
+  (define (get-record name file)
+    (cond ((null? file) #f)
+          ((string=? (record-name (car file)) name) (car file))
+          (else (get-record name (cdr file)))))
+
+  (put 'get-salary '(division-a-record) record-salary)
+  (put 'get-record '(string division-a-file)
+       (lambda (name file)
+         (let ((result (get-record name file)))
+           (if (equal? #f result)
+             #f
+             (attach-tag 'division-a-record result)))))
+  (put 'make-division-a-file 'division-a-file
+       (lambda (records)
+         (attach-tag 'division-a-file (make-file (map contents records)))))
+  (put 'make-division-a-record 'division-a-record
+       (lambda (name salary address)
+         (attach-tag 'division-a-record (make-record name salary address))))
+
+  'done)
+
+(install-division-a)
+(assert (and (equal? #f (get-record "Ostap" (make-division-a-file '())))
+             (let ((ostap (make-division-a-record "Ostap" 1337 "Tartu")))
+               (and (equal? ostap (get-record "Ostap" (make-division-a-file (list ostap))))
+                    (equal? 1337 (get-salary ostap))))))
