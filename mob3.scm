@@ -137,6 +137,14 @@
 (define (make-division-a-record name salary address)
   ((get 'make-division-a-record 'division-a-record) name salary address))
 
+(define (find-employee-record name files)
+  (if (null? files)
+      #f
+      (let ((record (get-record name (car files))))
+        (if (equal? record #f)
+            (find-employee-record name (cdr files))
+            record))))
+
 (define (install-division-a)
   (define (make-file records) records)
   (define (make-record name salary address) (list name salary address))
@@ -164,7 +172,12 @@
   'done)
 
 (install-division-a)
+
 (assert (and (equal? #f (get-record "Ostap" (make-division-a-file '())))
-             (let ((ostap (make-division-a-record "Ostap" 1337 "Tartu")))
-               (and (equal? ostap (get-record "Ostap" (make-division-a-file (list ostap))))
-                    (equal? 1337 (get-salary ostap))))))
+             (let* ((ostap (make-division-a-record "Ostap" 1337 "Tartu"))
+                    (tartu (make-division-a-file (list ostap))))
+               (and (equal? ostap (get-record "Ostap" tartu))
+                    (equal? 1337 (get-salary ostap))
+                    (equal? #f (find-employee-record "Ostap" '()))
+                    (equal? #f (find-employee-record "Vlad" (list tartu)))
+                    (equal? ostap (find-employee-record "Ostap" (list tartu)))))))
