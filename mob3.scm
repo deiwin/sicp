@@ -112,19 +112,21 @@
             (list op type-tags))))))
 
 (define (attach-tag type-tag contents)
-  (cons type-tag contents))
+  (if (eq? type-tag 'scheme-number)
+    contents
+    (cons type-tag contents)))
 
 (define (type-tag datum)
-  (if (pair? datum)
-      (car datum)
-      (error "Bad tagged datum:
-              TYPE-TAG" datum)))
+  (cond ((pair? datum) (car datum))
+        ((number? datum) 'scheme-number)
+        (else (error "Bad tagged datum:
+                     TYPE-TAG" datum))))
 
 (define (contents datum)
-  (if (pair? datum)
-      (cdr datum)
-      (error "Bad tagged datum:
-              CONTENTS" datum)))
+  (cond ((pair? datum) (cdr datum))
+        ((number? datum) datum)
+        (else (error "Bad tagged datum:
+                     CONTENTS" datum))))
 
 (define (get-record name file)
   (apply-generic 'get-record (attach-tag 'string name) file))
@@ -362,3 +364,16 @@
   'done)
 (define (make-scheme-number n)
   ((get 'make 'scheme-number) n))
+
+(define add (curry apply-generic 'add))
+(define sub (curry apply-generic 'sub))
+(define mul (curry apply-generic 'mul))
+(define div (curry apply-generic 'div))
+
+(install-scheme-number-package)
+(install-rational-package)
+(install-complex-package)
+(install-polar-package)
+(install-rectangular-package)
+
+(assert (= 4 (add (make-scheme-number 2) 2)))
