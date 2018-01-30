@@ -252,6 +252,12 @@
          (tag (make-from-mag-ang r a))))
   'done)
 
+(define (square x) (* x x))
+(define real-part (curry apply-generic 'real-part))
+(define imag-part (curry apply-generic 'imag-part))
+(define magnitude (curry apply-generic 'magnitude))
+(define angle (curry apply-generic 'angle))
+
 (define (install-complex-package)
   ;; imported procedures from rectangular
   ;; and polar packages
@@ -303,6 +309,9 @@
   (put 'imag-part '(complex) imag-part)
   (put 'magnitude '(complex) magnitude)
   (put 'angle '(complex) angle)
+  (put 'equ? '(complex complex)
+       (lambda (x y) (and (equ? (magnitude x) (magnitude y))
+                          (equ? (angle x) (angle y)))))
 
   'done)
 (define (make-complex-from-real-imag x y)
@@ -341,6 +350,9 @@
        (lambda (x y) (tag (mul-rat x y))))
   (put 'div '(rational rational)
        (lambda (x y) (tag (div-rat x y))))
+  (put 'equ? '(rational rational)
+       (lambda (x y) (and (equ? (numer x) (numer y))
+                          (equ? (denom x) (denom y)))))
   (put 'make 'rational
        (lambda (n d) (tag (make-rat n d))))
   'done)
@@ -359,6 +371,8 @@
        (lambda (x y) (tag (* x y))))
   (put 'div '(scheme-number scheme-number)
        (lambda (x y) (tag (/ x y))))
+  (put 'equ? '(scheme-number scheme-number)
+       (lambda (x y) (= x y)))
   (put 'make 'scheme-number
        (lambda (x) (tag x)))
   'done)
@@ -377,3 +391,9 @@
 (install-rectangular-package)
 
 (assert (= 4 (add (make-scheme-number 2) 2)))
+
+(define equ? (curry apply-generic 'equ?))
+
+(assert (and (equ? 2 2)
+             (equ? (make-rational 1 2) (make-rational 2 4))
+             (equ? (make-complex-from-mag-ang 1 0) (make-complex-from-real-imag 1 0))))
