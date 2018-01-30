@@ -181,3 +181,17 @@
                     (equal? #f (find-employee-record "Ostap" '()))
                     (equal? #f (find-employee-record "Vlad" (list tartu)))
                     (equal? ostap (find-employee-record "Ostap" (list tartu)))))))
+
+(define (make-from-mag-ang mag ang)
+  (define (dispatch op)
+    (cond ((eq? op 'real-part) (* mag (cos ang)))
+          ((eq? op 'imag-part) (* mag (sin ang)))
+          ((eq? op 'magnitude) mag)
+          ((eq? op 'angle) ang)
+          (else
+            (error "Unknown op:
+                   MAKE-FROM-REAL-IMAG" op))))
+  dispatch)
+
+(assert (and (= 1 ((make-from-mag-ang 1 0) 'real-part))
+             (= 0 ((make-from-mag-ang 1 0) 'imag-part))))
