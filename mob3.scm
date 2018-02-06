@@ -27,6 +27,10 @@
 (define (put op type val)
   (set! global-table (put-table op type val global-table)))
 
+(define coercion-table empty-table)
+(define (get-coercion op type) (get-table op type coercion-table))
+(define (put-coercion op type val)
+  (set! coercion-table (put-table op type val coercion-table)))
 
 (define (operator exp) (car exp))
 (define (operands exp) (cdr exp))
@@ -106,10 +110,38 @@
     (let ((proc (get op type-tags)))
       (if proc
           (apply proc (map contents args))
-          (error
-            "No method for these types:
-             APPLY-GENERIC"
-            (list op type-tags))))))
+          (if (= (length args) 2)
+              (let ((type1 (car type-tags))
+                    (type2 (cadr type-tags))
+                    (a1 (car args))
+                    (a2 (cadr args)))
+                (if (eq? type1 type2)
+                    (error
+                     "No method for these types"
+                     (list op type-tags))
+                    (let ((t1->t2
+                           (get-coercion type1
+                                         type2))
+                          (t2->t1
+                           (get-coercion type2
+                                         type1)))
+                      (cond (t1->t2
+                             (apply-generic
+                              op (t1->t2 a1) a2))
+                            (t2->t1
+                             (apply-generic
+                              op a1 (t2->t1 a2)))
+                            (else
+                             (error
+                              "No method for
+                               these types"
+                              (list
+                               op
+                               type-tags)))))))
+              (error
+               "No method for these types"
+               (list op type-tags)))))))
+
 
 (define (attach-tag type-tag contents)
   (if (eq? type-tag 'scheme-number)
@@ -381,6 +413,10 @@
        (lambda (x) (= x 0)))
   (put 'make 'scheme-number
        (lambda (x) (tag x)))
+  (put 'exp
+     '(scheme-number scheme-number)
+     (lambda (x y)
+       (tag (expt x y))))
   'done)
 (define (make-scheme-number n)
   ((get 'make 'scheme-number) n))
@@ -389,6 +425,7 @@
 (define sub (curry apply-generic 'sub))
 (define mul (curry apply-generic 'mul))
 (define div (curry apply-generic 'div))
+(define exp (curry apply-generic 'exp))
 
 (install-scheme-number-package)
 (install-rational-package)
@@ -410,3 +447,19 @@
                   (=zero? (make-rational 0 100)))
              (and (=zero? (make-complex-from-real-imag 0 0))
                   (=zero? (make-complex-from-mag-ang 0 1)))))
+
+(define (scheme-number->complex n)
+  (make-complex-from-real-imag
+   (contents n) 0))
+
+(put-coercion 'scheme-number 'complex
+              scheme-number->complex)
+
+(put-coercion 'complex 'complex identity)
+
+(assert "coercion" (equ? 1 (make-complex-from-mag-ang 1 0)))
+(assert "coercion to self"
+        (equal? 'failed
+                (with-handlers ((exn:fail? (lambda (exn) 'failed)))
+                  (exp (make-complex-from-real-imag 1 1)
+                       (make-complex-from-real-imag 1 1)))))
