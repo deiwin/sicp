@@ -105,42 +105,42 @@
              (equal? 2 (deriv (deriv '(** x 2) 'x) 'x))
              (equal? 1 (deriv '(** x 1) 'x))))
 
+(define (always n) (lambda (i) n))
 (define (apply-generic op . args)
   (let ((type-tags (map type-tag args)))
     (let ((proc (get op type-tags)))
       (if proc
         (apply proc (map contents args))
-        (if (= (length args) 2)
-          (let ((type1 (car type-tags))
-                (type2 (cadr type-tags))
-                (a1 (car args))
-                (a2 (cadr args)))
-            (if (eq? type1 type2)
-              (error
-                "No method for these types"
-                (list op type-tags))
-              (let ((t1->t2
-                      (get-coercion type1
-                                    type2))
-                    (t2->t1
-                      (get-coercion type2
-                                    type1)))
-                (cond (t1->t2
-                        (apply-generic
-                          op (t1->t2 a1) a2))
-                      (t2->t1
-                        (apply-generic
-                          op a1 (t2->t1 a2)))
-                      (else
-                        (error
-                          "No method for
-                          these types"
-                          (list
-                            op
-                            type-tags)))))))
+        (let ((call-with-coercion ; TODO check if all types are equal for infinite loop
+                (foldl (lambda (to-type acc)
+                         (if (not (equal? #f acc))
+                           acc
+                           (let* ((coercions (map
+                                               (lambda (from-type)
+                                                 (if (equal? from-type to-type)
+                                                   identity
+                                                   (get-coercion from-type to-type)))
+                                               type-tags))
+                                  (can-coerce (not (memq #f coercions))))
+                             (if can-coerce
+                               (lambda ()
+                                 (let* ((original-values (map contents args))
+                                        (coerced-values (map
+                                                          (lambda (coercion value)
+                                                            (coercion value))
+                                                          coercions
+                                                          original-values))
+                                        (coerced-types (map (always to-type) type-tags))
+                                        (coerced-proc (get op coerced-types)))
+                                   (apply coerced-proc coerced-values)))
+                               #f))))
+                       #f
+                       type-tags)))
+          (if call-with-coercion
+            (call-with-coercion)
             (error
               "No method for these types"
-              (list op type-tags)))))))
+              (list op type-tags))))))))
 
 
 (define (attach-tag type-tag contents)
@@ -458,8 +458,8 @@
 (put-coercion 'complex 'complex identity)
 
 (assert "coercion" (equ? 1 (make-complex-from-mag-ang 1 0)))
-(assert "coercion to self"
-        (equal? 'failed
-                (with-handlers ((exn:fail? (lambda (exn) 'failed)))
-                               (exp (make-complex-from-real-imag 1 1)
-                                    (make-complex-from-real-imag 1 1)))))
+; (assert "coercion to self"
+;         (equal? 'failed
+;                 (with-handlers ((exn:fail? (lambda (exn) 'failed)))
+;                                (exp (make-complex-from-real-imag 1 1)
+;                                     (make-complex-from-real-imag 1 1)))))
