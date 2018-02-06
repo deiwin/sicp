@@ -111,7 +111,7 @@
     (let ((proc (get op type-tags)))
       (if proc
         (apply proc (map contents args))
-        (let ((call-with-coercion ; TODO check if all types are equal for infinite loop
+        (let ((call-with-coercion
                 (foldl (lambda (to-type acc)
                          (if (not (equal? #f acc))
                            acc
@@ -123,16 +123,17 @@
                                                type-tags))
                                   (can-coerce (not (memq #f coercions))))
                              (if can-coerce
-                               (lambda ()
-                                 (let* ((original-values (map contents args))
-                                        (coerced-values (map
-                                                          (lambda (coercion value)
-                                                            (coercion value))
-                                                          coercions
-                                                          original-values))
-                                        (coerced-types (map (always to-type) type-tags))
-                                        (coerced-proc (get op coerced-types)))
-                                   (apply coerced-proc coerced-values)))
+                               (let* ((original-values (map contents args))
+                                      (coerced-values (map
+                                                        (lambda (coercion value)
+                                                          (coercion value))
+                                                        coercions
+                                                        original-values))
+                                      (coerced-types (map (always to-type) type-tags))
+                                      (coerced-proc (get op coerced-types)))
+                                 (if coerced-proc
+                                   (lambda () (apply coerced-proc coerced-values))
+                                   (#f)))
                                #f))))
                        #f
                        type-tags)))
@@ -458,8 +459,8 @@
 (put-coercion 'complex 'complex identity)
 
 (assert "coercion" (equ? 1 (make-complex-from-mag-ang 1 0)))
-; (assert "coercion to self"
-;         (equal? 'failed
-;                 (with-handlers ((exn:fail? (lambda (exn) 'failed)))
-;                                (exp (make-complex-from-real-imag 1 1)
-;                                     (make-complex-from-real-imag 1 1)))))
+(assert "coercion to self"
+        (equal? 'failed
+                (with-handlers ((exn:fail? (lambda (exn) 'failed)))
+                               (exp (make-complex-from-real-imag 1 1)
+                                    (make-complex-from-real-imag 1 1)))))
