@@ -312,6 +312,8 @@
   (put 'equ? '(complex complex)
        (lambda (x y) (and (equ? (magnitude x) (magnitude y))
                           (equ? (angle x) (angle y)))))
+  (put '=zero? '(complex)
+       (lambda (x) (equ? (magnitude x) 0)))
 
   'done)
 (define (make-complex-from-real-imag x y)
@@ -353,6 +355,8 @@
   (put 'equ? '(rational rational)
        (lambda (x y) (and (equ? (numer x) (numer y))
                           (equ? (denom x) (denom y)))))
+  (put '=zero? '(rational)
+       (lambda (x) (equ? (numer x) 0)))
   (put 'make 'rational
        (lambda (n d) (tag (make-rat n d))))
   'done)
@@ -373,6 +377,8 @@
        (lambda (x y) (tag (/ x y))))
   (put 'equ? '(scheme-number scheme-number)
        (lambda (x y) (= x y)))
+  (put '=zero? '(scheme-number)
+       (lambda (x) (= x 0)))
   (put 'make 'scheme-number
        (lambda (x) (tag x)))
   'done)
@@ -397,3 +403,10 @@
 (assert (and (equ? 2 2)
              (equ? (make-rational 1 2) (make-rational 2 4))
              (equ? (make-complex-from-mag-ang 1 0) (make-complex-from-real-imag 1 0))))
+
+(define =zero? (curry apply-generic '=zero?))
+(assert (and (=zero? 0)
+             (and (=zero? (make-rational 0 1))
+                  (=zero? (make-rational 0 100)))
+             (and (=zero? (make-complex-from-real-imag 0 0))
+                  (=zero? (make-complex-from-mag-ang 0 1)))))
