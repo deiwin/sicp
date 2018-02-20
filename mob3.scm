@@ -105,43 +105,57 @@
              (equal? 2 (deriv (deriv '(** x 2) 'x) 'x))
              (equal? 1 (deriv '(** x 1) 'x))))
 
+(define (map-find fn values)
+  (foldl (lambda (value acc)
+           (if (not (equal? #f acc))
+             acc
+             (fn value)))
+         #f
+         values))
+
 (define (always n) (lambda (i) n))
 (define (apply-generic op . args)
-  (let ((type-tags (map type-tag args)))
-    (let ((proc (get op type-tags)))
-      (if proc
-        (apply proc (map contents args))
-        (let ((call-with-coercion
-                (foldl (lambda (to-type acc)
-                         (if (not (equal? #f acc))
-                           acc
-                           (let* ((coercions (map
-                                               (lambda (from-type)
-                                                 (if (equal? from-type to-type)
-                                                   identity
-                                                   (get-coercion from-type to-type)))
-                                               type-tags))
-                                  (can-coerce (not (memq #f coercions))))
-                             (if can-coerce
-                               (let* ((original-values (map contents args))
-                                      (coerced-values (map
-                                                        (lambda (coercion value)
-                                                          (coercion value))
-                                                        coercions
-                                                        original-values))
-                                      (coerced-types (map (always to-type) type-tags))
-                                      (coerced-proc (get op coerced-types)))
-                                 (if coerced-proc
-                                   (lambda () (apply coerced-proc coerced-values))
-                                   (#f)))
-                               #f))))
-                       #f
-                       type-tags)))
-          (if call-with-coercion
-            (call-with-coercion)
-            (error
-              "No method for these types"
-              (list op type-tags))))))))
+  (let* ((type-tags (map type-tag args))
+         (proc (get op type-tags))
+         (get-coerced-proc
+           (lambda (to-type)
+             (let ((coerced-types (map (always to-type) type-tags)))
+                  (get op coerced-types))))
+         (make-generic-call (lambda (coerced-proc coercers)
+                              (let* ((original-values (map contents args))
+                                     (coerced-values (map
+                                                       (lambda (coercer value)
+                                                         (coercer value))
+                                                       coercers
+                                                       original-values)))
+                                    (lambda () (apply coerced-proc coerced-values)))))
+         (find-coercers (lambda (to-type)
+                                (let* ((coercers (map
+                                                    (lambda (from-type)
+                                                      (if (equal? from-type to-type)
+                                                        identity
+                                                        (get-coercion from-type to-type)))
+                                                    type-tags))
+                                       (can-coerce (not (memq #f coercers))))
+                                  (if can-coerce
+                                    coercers
+                                    #f)))))
+
+    (if proc
+      (apply proc (map contents args))
+      (let ((call-with-coercion
+              (map-find (lambda (to-type)
+                         (let* ((coercers (find-coercers to-type))
+                                (coerced-proc (get-coerced-proc to-type)))
+                           (if (and coercers coerced-proc)
+                               (make-generic-call coerced-proc coercers)
+                               #f)))
+                        type-tags)))
+        (if call-with-coercion
+          (call-with-coercion)
+          (error
+            "No method for these types"
+            (list op type-tags)))))))
 
 
 (define (attach-tag type-tag contents)
