@@ -159,19 +159,23 @@
 
 
 (define (attach-tag type-tag contents)
-  (if (eq? type-tag 'scheme-number)
+  (if (or (eq? type-tag 'scheme-number)
+          (eq? type-tag 'real))
     contents
     (cons type-tag contents)))
 
 (define (type-tag datum)
   (cond ((pair? datum) (car datum))
-        ((number? datum) 'scheme-number)
+        ((integer? datum) 'scheme-number)
+        ((real? datum) 'real)
         (else (error "Bad tagged datum:
                      TYPE-TAG" datum))))
 
 (define (contents datum)
   (cond ((pair? datum) (cdr datum))
-        ((number? datum) datum)
+        ((or (integer? datum)
+             (real? datum))
+         datum)
         (else (error "Bad tagged datum:
                      CONTENTS" datum))))
 
@@ -368,6 +372,28 @@
 (define (make-complex-from-mag-ang r a)
   ((get 'make-from-mag-ang 'complex) r a))
 
+(define (install-real-package)
+  (define (tag x) (attach-tag 'real x))
+  (put 'add '(real real)
+       (lambda (x y) (tag (+ x y))))
+  (put 'sub '(real real)
+       (lambda (x y) (tag (- x y))))
+  (put 'mul '(real real)
+       (lambda (x y) (tag (* x y))))
+  (put 'div '(real real)
+       (lambda (x y) (tag (/ x y))))
+  (put 'equ? '(real real)
+       (lambda (x y) (= x y)))
+  (put '=zero? '(real)
+       (lambda (x) (= x 0)))
+  (put 'make 'real
+       (lambda (x) (tag x)))
+  (put 'exp
+     '(real real)
+     (lambda (x y)
+       (tag (expt x y))))
+  'done)
+
 (define (install-rational-package)
   ;; internal procedures
   (define (numer x) (car x))
@@ -444,6 +470,7 @@
 
 (install-scheme-number-package)
 (install-rational-package)
+(install-real-package)
 (install-complex-package)
 (install-polar-package)
 (install-rectangular-package)
