@@ -120,7 +120,7 @@
          (get-coerced-proc
            (lambda (to-type)
              (let ((coerced-types (map (always to-type) type-tags)))
-                  (get op coerced-types))))
+               (get op coerced-types))))
          (make-generic-call (lambda (coerced-proc coercers)
                               (let* ((original-values (map contents args))
                                      (coerced-values (map
@@ -128,28 +128,28 @@
                                                          (coercer value))
                                                        coercers
                                                        original-values)))
-                                    (lambda () (apply coerced-proc coerced-values)))))
+                                (lambda () (apply coerced-proc coerced-values)))))
          (find-coercers (lambda (to-type)
-                                (let* ((coercers (map
-                                                    (lambda (from-type)
-                                                      (if (equal? from-type to-type)
-                                                        identity
-                                                        (get-coercion from-type to-type)))
-                                                    type-tags))
-                                       (can-coerce (not (memq #f coercers))))
-                                  (if can-coerce
-                                    coercers
-                                    #f)))))
+                          (let* ((coercers (map
+                                             (lambda (from-type)
+                                               (if (equal? from-type to-type)
+                                                 identity
+                                                 (get-coercion from-type to-type)))
+                                             type-tags))
+                                 (can-coerce (not (memq #f coercers))))
+                            (if can-coerce
+                              coercers
+                              #f)))))
 
     (if proc
       (apply proc (map contents args))
       (let ((call-with-coercion
               (map-find (lambda (to-type)
-                         (let* ((coercers (find-coercers to-type))
-                                (coerced-proc (get-coerced-proc to-type)))
-                           (if (and coercers coerced-proc)
-                               (make-generic-call coerced-proc coercers)
-                               #f)))
+                          (let* ((coercers (find-coercers to-type))
+                                 (coerced-proc (get-coerced-proc to-type)))
+                            (if (and coercers coerced-proc)
+                              (make-generic-call coerced-proc coercers)
+                              #f)))
                         type-tags)))
         (if call-with-coercion
           (call-with-coercion)
