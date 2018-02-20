@@ -166,14 +166,14 @@
 
 (define (type-tag datum)
   (cond ((pair? datum) (car datum))
-        ((integer? datum) 'scheme-number)
+        ((exact-integer? datum) 'scheme-number)
         ((real? datum) 'real)
         (else (error "Bad tagged datum:
                      TYPE-TAG" datum))))
 
 (define (contents datum)
   (cond ((pair? datum) (cdr datum))
-        ((or (integer? datum)
+        ((or (exact-integer? datum)
              (real? datum))
          datum)
         (else (error "Bad tagged datum:
@@ -309,6 +309,8 @@
 (define magnitude (curry apply-generic 'magnitude))
 (define angle (curry apply-generic 'angle))
 
+(define denominator (curry apply-generic 'denominator))
+(define numerator (curry apply-generic 'numerator))
 (define (install-complex-package)
   ;; imported procedures from rectangular
   ;; and polar packages
@@ -365,6 +367,8 @@
                           (equ? (angle x) (angle y)))))
   (put '=zero? '(complex)
        (lambda (x) (equ? (magnitude x) 0)))
+  (put 'raise '(real)
+       (lambda (x) (tag (make-from-real-imag x 0))))
 
   'done)
 (define (make-complex-from-real-imag x y)
@@ -392,6 +396,12 @@
      '(real real)
      (lambda (x y)
        (tag (expt x y))))
+  (put 'raise '(rational)
+       (lambda (x)
+         (let ((rat-x (attach-tag 'rational x)))
+           (tag (* (/ (numerator rat-x)
+                      (denominator rat-x))
+                   1.0)))))
   'done)
 
 (define (install-rational-package)
@@ -432,6 +442,15 @@
        (lambda (x) (equ? (numer x) 0)))
   (put 'make 'rational
        (lambda (n d) (tag (make-rat n d))))
+  (put 'raise '(scheme-number)
+       (lambda (x) (tag (make-rat x 1))))
+  (put 'denominator '(rational)
+       (compose1 (curry attach-tag 'scheme-number)
+                 denom))
+  (put 'numerator '(rational)
+       (compose1 (curry attach-tag 'scheme-number)
+                 numer))
+
   'done)
 
 (define (make-rational n d)
@@ -467,6 +486,7 @@
 (define mul (curry apply-generic 'mul))
 (define div (curry apply-generic 'div))
 (define exp (curry apply-generic 'exp))
+(define raise (curry apply-generic 'raise))
 
 (install-scheme-number-package)
 (install-rational-package)
@@ -505,3 +525,7 @@
                 (with-handlers ((exn:fail? (lambda (exn) 'failed)))
                                (exp (make-complex-from-real-imag 1 1)
                                     (make-complex-from-real-imag 1 1)))))
+
+(assert "raise" (and (equal? (raise 5) (make-rational 5 1))
+                     (equal? (raise (raise 5)) 5.0)
+                     (equal? (raise (raise (raise 5))) (make-complex-from-real-imag 5.0 0))))
