@@ -23,9 +23,22 @@
           (equal? 'last-val (get-table 'op 'type table))))
 
 (define global-table empty-table)
-(define (get op type) (get-table op type global-table))
-(define (put op type val)
-  (set! global-table (put-table op type val global-table)))
+(define (get op-name type)
+  (let ((op (get-table op-name type global-table)))
+    (if op
+      (cdr op)
+      #f)))
+(define (get-return-type op-name type)
+  (let ((op (get-table op-name type global-table)))
+    (if op
+      (car op)
+      #f)))
+(define (put op-name type op)
+  (let ((val (cons 'unknown op)))
+    (set! global-table (put-table op-name type val global-table))))
+(define (put-with-return-type op-name type return-type op)
+  (let ((val (cons return-type op)))
+    (set! global-table (put-table op-name type val global-table))))
 
 (define coercion-table empty-table)
 (define (get-coercion op type) (get-table op type coercion-table))
@@ -115,31 +128,46 @@
 
 (define (always n) (lambda (i) n))
 (define (apply-generic op . args)
-  (let* ((type-tags (map type-tag args))
-         (proc (get op type-tags))
-         (get-coerced-proc
-           (lambda (to-type)
-             (let ((coerced-types (map (always to-type) type-tags)))
-               (get op coerced-types))))
-         (make-generic-call (lambda (coerced-proc coercers)
-                              (let* ((original-values (map contents args))
-                                     (coerced-values (map
-                                                       (lambda (coercer value)
-                                                         (coercer value))
-                                                       coercers
-                                                       original-values)))
-                                (lambda () (apply coerced-proc coerced-values)))))
-         (find-coercers (lambda (to-type)
-                          (let* ((coercers (map
-                                             (lambda (from-type)
-                                               (if (equal? from-type to-type)
-                                                 identity
-                                                 (get-coercion from-type to-type)))
-                                             type-tags))
-                                 (can-coerce (not (memq #f coercers))))
-                            (if can-coerce
-                              coercers
-                              #f)))))
+  (letrec ((type-tags (map type-tag args))
+           (proc (get op type-tags))
+           (get-coerced-proc
+             (lambda (to-type)
+               (let ((coerced-types (map (always to-type) type-tags)))
+                 (get op coerced-types))))
+           (make-generic-call (lambda (coerced-proc coercers)
+                                (let* ((original-values (map contents args))
+                                       (coerced-values (map
+                                                         (lambda (coercer value)
+                                                           (coercer value))
+                                                         coercers
+                                                         original-values)))
+                                  (lambda () (apply coerced-proc coerced-values)))))
+           (get-coercion-via-raise (lambda (from-type to-type)
+                                     (let ((raise-result-type (get-return-type 'raise (list from-type)))
+                                           (raise-op (get 'raise (list from-type))))
+                                       (cond ((not raise-result-type) #f)
+                                             ((equal? raise-result-type to-type)
+                                              (compose1 contents raise-op))
+                                             (else
+                                               (let ((recursive-raise
+                                                       (get-coercion-via-raise raise-result-type to-type)))
+                                                 (if recursive-raise
+                                                   (compose1 recursive-raise contents raise-op)
+                                                   #f)))))))
+           (find-coercers (lambda (to-type)
+                            (let* ((coercers (map
+                                               (lambda (from-type)
+                                                 (if (equal? from-type to-type)
+                                                   identity
+                                                   (let ((direct-coercion (get-coercion from-type to-type)))
+                                                     (if direct-coercion
+                                                       direct-coercion
+                                                       (get-coercion-via-raise from-type to-type)))))
+                                               type-tags))
+                                   (can-coerce (not (memq #f coercers))))
+                              (if can-coerce
+                                coercers
+                                #f)))))
 
     (if proc
       (apply proc (map contents args))
@@ -367,8 +395,8 @@
                           (equ? (angle x) (angle y)))))
   (put '=zero? '(complex)
        (lambda (x) (equ? (magnitude x) 0)))
-  (put 'raise '(real)
-       (lambda (x) (tag (make-from-real-imag x 0))))
+  (put-with-return-type 'raise '(real) 'complex
+    (lambda (x) (tag (make-from-real-imag x 0))))
 
   'done)
 (define (make-complex-from-real-imag x y)
@@ -396,7 +424,7 @@
      '(real real)
      (lambda (x y)
        (tag (expt x y))))
-  (put 'raise '(rational)
+  (put-with-return-type 'raise '(rational) 'real
        (lambda (x)
          (let ((rat-x (attach-tag 'rational x)))
            (tag (* (/ (numerator rat-x)
@@ -442,7 +470,7 @@
        (lambda (x) (equ? (numer x) 0)))
   (put 'make 'rational
        (lambda (n d) (tag (make-rat n d))))
-  (put 'raise '(scheme-number)
+  (put-with-return-type 'raise '(scheme-number) 'rational
        (lambda (x) (tag (make-rat x 1))))
   (put 'denominator '(rational)
        (compose1 (curry attach-tag 'scheme-number)
@@ -529,3 +557,7 @@
 (assert "raise" (and (equal? (raise 5) (make-rational 5 1))
                      (equal? (raise (raise 5)) 5.0)
                      (equal? (raise (raise (raise 5))) (make-complex-from-real-imag 5.0 0))))
+
+(assert "can raise arguments for apply-generic"
+        (and (equal? (make-rational 5 3) (add 1 (make-rational 2 3)))
+             (equal? 2.2 (add 1 1.2))))
