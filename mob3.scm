@@ -397,7 +397,8 @@
        (lambda (x) (equ? (magnitude x) 0)))
   (put-with-return-type 'raise '(real) 'complex
     (lambda (x) (tag (make-from-real-imag x 0))))
-
+  (put 'project '(complex)
+       (lambda (x) (real-part x)))
   'done)
 (define (make-complex-from-real-imag x y)
   ((get 'make-from-real-imag 'complex) x y))
@@ -430,6 +431,11 @@
            (tag (* (/ (numerator rat-x)
                       (denominator rat-x))
                    1.0)))))
+  (put 'project '(real)
+       (lambda (x)
+         (let ((multiplier 100000))
+           (make-rational (exact-truncate (* x multiplier))
+                          multiplier))))
   'done)
 
 (define (install-rational-package)
@@ -472,6 +478,8 @@
        (lambda (n d) (tag (make-rat n d))))
   (put-with-return-type 'raise '(scheme-number) 'rational
        (lambda (x) (tag (make-rat x 1))))
+  (put 'project '(rational)
+       (lambda (x) (make-scheme-number (quotient (numer x) (denom x)))))
   (put 'denominator '(rational)
        (compose1 (curry attach-tag 'scheme-number)
                  denom))
@@ -515,6 +523,7 @@
 (define div (curry apply-generic 'div))
 (define exp (curry apply-generic 'exp))
 (define raise (curry apply-generic 'raise))
+(define project (curry apply-generic 'project))
 
 (install-scheme-number-package)
 (install-rational-package)
@@ -561,3 +570,24 @@
 (assert "can raise arguments for apply-generic"
         (and (equal? (make-rational 5 3) (add 1 (make-rational 2 3)))
              (equal? 2.2 (add 1 1.2))))
+
+(assert "projects down"
+        (and (equal? 3 (project (make-rational 3 1)))
+             (equal? (make-rational 3 1) (project 3.0))
+             (equal? 3.0 (project (make-complex-from-real-imag 3.0 0)))))
+
+(define (my-drop x)
+  (let ((project-p (get 'project (list (type-tag x)))))
+       (if project-p
+         (let ((projection (project-p (contents x))))
+              (if (equ? projection x)
+                (my-drop projection)
+                x))
+         x)))
+
+(assert "drops as low as possible"
+        (and (equal? 3 (my-drop (make-rational 3 1)))
+             (equal? 3 (my-drop 3.0))
+             (equal? (make-rational 7 2) (my-drop 3.5))
+             (equal? 3 (my-drop (make-complex-from-real-imag 3.0 0)))
+             (equal? 3.000001 (my-drop 3.000001))))
