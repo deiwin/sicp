@@ -126,6 +126,17 @@
          #f
          values))
 
+(define (my-drop x)
+  (if (type-tagged? x)
+    (let ((project-p (get 'project (list (type-tag x)))))
+      (if project-p
+        (let ((projection (project-p (contents x))))
+          (if (equ? projection x)
+            (my-drop projection)
+            x))
+        x))
+    x))
+
 (define (always n) (lambda (i) n))
 (define (apply-generic op . args)
   (letrec ((type-tags (map type-tag args))
@@ -169,21 +180,22 @@
                                 coercers
                                 #f)))))
 
-    (if proc
-      (apply proc (map contents args))
-      (let ((call-with-coercion
-              (map-find (lambda (to-type)
-                          (let* ((coercers (find-coercers to-type))
-                                 (coerced-proc (get-coerced-proc to-type)))
-                            (if (and coercers coerced-proc)
-                              (make-generic-call coerced-proc coercers)
-                              #f)))
-                        type-tags)))
-        (if call-with-coercion
-          (call-with-coercion)
-          (error
-            "No method for these types"
-            (list op type-tags)))))))
+    (my-drop
+      (if proc
+        (apply proc (map contents args))
+        (let ((call-with-coercion
+                (map-find (lambda (to-type)
+                            (let* ((coercers (find-coercers to-type))
+                                   (coerced-proc (get-coerced-proc to-type)))
+                              (if (and coercers coerced-proc)
+                                (make-generic-call coerced-proc coercers)
+                                #f)))
+                          type-tags)))
+          (if call-with-coercion
+            (call-with-coercion)
+            (error
+              "No method for these types"
+              (list op type-tags))))))))
 
 
 (define (attach-tag type-tag contents)
@@ -191,6 +203,11 @@
           (eq? type-tag 'real))
     contents
     (cons type-tag contents)))
+
+(define (type-tagged? datum)
+  (or (pair? datum)
+      (exact-integer? datum)
+      (real? datum)))
 
 (define (type-tag datum)
   (cond ((pair? datum) (car datum))
@@ -522,8 +539,6 @@
 (define mul (curry apply-generic 'mul))
 (define div (curry apply-generic 'div))
 (define exp (curry apply-generic 'exp))
-(define raise (curry apply-generic 'raise))
-(define project (curry apply-generic 'project))
 
 (install-scheme-number-package)
 (install-rational-package)
@@ -563,27 +578,9 @@
                                (exp (make-complex-from-real-imag 1 1)
                                     (make-complex-from-real-imag 1 1)))))
 
-(assert "raise" (and (equal? (raise 5) (make-rational 5 1))
-                     (equal? (raise (raise 5)) 5.0)
-                     (equal? (raise (raise (raise 5))) (make-complex-from-real-imag 5.0 0))))
-
 (assert "can raise arguments for apply-generic"
         (and (equal? (make-rational 5 3) (add 1 (make-rational 2 3)))
-             (equal? 2.2 (add 1 1.2))))
-
-(assert "projects down"
-        (and (equal? 3 (project (make-rational 3 1)))
-             (equal? (make-rational 3 1) (project 3.0))
-             (equal? 3.0 (project (make-complex-from-real-imag 3.0 0)))))
-
-(define (my-drop x)
-  (let ((project-p (get 'project (list (type-tag x)))))
-       (if project-p
-         (let ((projection (project-p (contents x))))
-              (if (equ? projection x)
-                (my-drop projection)
-                x))
-         x)))
+             (equal? (make-rational 11 5) (add 1 1.2))))
 
 (assert "drops as low as possible"
         (and (equal? 3 (my-drop (make-rational 3 1)))
