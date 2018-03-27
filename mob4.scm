@@ -87,3 +87,50 @@
                (equal? "Incorrect password" invalid-password-withdrawal)
                (equal? "Cops are coming!" too-many-invalid-withdrawals)
                (equal? "Incorrect password" unsuccessful-login-attempt-after-successful-login-attempt-after-cops))))
+
+
+(define (random-in-range low high)
+  (let ((range (- high low)))
+    (+ low (* (random) range))))
+
+(define (cesaro-test)
+   (= (gcd (random) (random)) 1))
+
+(define (monte-carlo trials experiment)
+  (define (iter trials-remaining trials-passed)
+    (cond ((= trials-remaining 0)
+           (/ trials-passed trials))
+          ((experiment)
+           (iter (- trials-remaining 1)
+                 (+ trials-passed 1)))
+          (else
+           (iter (- trials-remaining 1)
+                 trials-passed))))
+  (iter trials 0))
+
+(define (estimate-pi trials)
+  (sqrt (/ 6 (monte-carlo trials cesaro-test))))
+
+(define (estimate-integral pred x1 x2 y1 y2 trials)
+  (*
+    (monte-carlo
+     trials
+     (lambda ()
+       (let ((x (random-in-range x1 x2))
+             (y (random-in-range y1 y2)))
+          (pred x y))))
+    (abs (- x2 x1))
+    (abs (- y2 y1))))
+
+(define (square x) (* x x))
+
+(define (circle-pred radius center-x center-y)
+  (lambda (x y)
+          (<=
+           (+ (square (- x center-x)) (square (- y center-y)))
+           (square radius))))
+
+(define (estimate-pi2 trials)
+  (estimate-integral (circle-pred 1 0 0) -1 1 -1 1 trials))
+
+(exact->inexact (estimate-pi2 100000))
