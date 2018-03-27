@@ -36,7 +36,7 @@
                (= call-count 1)
                (= call-count2 0))))
 
-(define (make-account balance)
+(define (make-account balance password)
   (define (withdraw amount)
     (if (>= balance amount)
         (begin (set! balance
@@ -46,9 +46,18 @@
   (define (deposit amount)
     (set! balance (+ balance amount))
     balance)
-  (define (dispatch m)
-    (cond ((eq? m 'withdraw) withdraw)
+  (define (dispatch provided-password m)
+    (cond ((not (eq? provided-password password)) (error "Incorrect password"))
+          ((eq? m 'withdraw) withdraw)
           ((eq? m 'deposit) deposit)
           (else (error "Unknown request:
                  MAKE-ACCOUNT" m))))
   dispatch)
+
+(let* ((acc (make-account 100 'secret-password))
+       (balance-after-withdrawal ((acc 'secret-password 'withdraw) 40))
+       (invalid-password-withdrawal
+        (with-handlers ((exn:fail? (lambda (exn) (exn-message exn))))
+          ((acc 'invalid-password 'withdraw) 40))))
+  (assert (and (= 60 balance-after-withdrawal)
+               (equal? "Incorrect password" invalid-password-withdrawal))))
